@@ -1,9 +1,11 @@
+@ui @auth @regression
 Feature: Authentication
   Sign-in behavior for valid, invalid and locked-out users.
 
   Background:
     Given I am on the login page
 
+  @smoke
   Scenario: Standard user signs in successfully
     When I sign in as "standard_user"
     Then I should see the inventory dashboard

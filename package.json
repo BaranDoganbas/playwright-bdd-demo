@@ -7,6 +7,8 @@
     "test": "npx bddgen && npx playwright test",
     "test:ui": "npx bddgen && npx playwright test --project=setup --project=ui --project=auth",
     "test:api": "npx bddgen && npx playwright test --project=api",
+    "test:smoke": "npx bddgen && npx playwright test --grep @smoke",
+    "test:regression": "npx bddgen && npx playwright test --grep @regression",
     "report": "npx playwright show-report",
     "typecheck": "tsc --noEmit"
   },

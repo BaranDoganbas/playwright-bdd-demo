@@ -1,3 +1,4 @@
+@ui @regression
 Feature: Shopping flow
   An authenticated customer can browse, sort, and purchase products.
   These scenarios reuse persisted storage state; login is never repeated here.
@@ -17,6 +18,7 @@ Feature: Shopping flow
     Then the cart should contain 2 items
     And the cart should contain "Sauce Labs Backpack"
 
+  @smoke
   Scenario: Completing an order end to end
     When I add "Sauce Labs Backpack" to the cart
     And I open the cart
