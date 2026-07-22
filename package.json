@@ -1,0 +1,22 @@
+{
+  "name": "playwright-bdd-demo",
+  "version": "1.0.0",
+  "description": "Playwright + playwright-bdd E2E framework: page objects, storage-state auth, multi-project config, Cucumber HTML reporting in CI",
+  "private": true,
+  "scripts": {
+    "test": "npx bddgen && npx playwright test",
+    "test:ui": "npx bddgen && npx playwright test --project=setup --project=ui --project=auth",
+    "test:api": "npx bddgen && npx playwright test --project=api",
+    "report": "npx playwright show-report",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.1.1",
+    "playwright-bdd": "^9.2.0",
+    "typescript": "^7.0.2"
+  }
+}
