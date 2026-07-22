@@ -1,0 +1,33 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # Playwright core and its BDD layer move together; split PRs would fail CI.
+      playwright:
+        patterns:
+          - '@playwright/test'
+          - 'playwright'
+          - 'playwright-bdd'
+      lint:
+        patterns:
+          - 'eslint*'
+          - '@eslint/*'
+          - 'typescript-eslint'
+          - 'prettier*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
