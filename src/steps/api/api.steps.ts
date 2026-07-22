@@ -76,6 +76,9 @@ Then('the booking should no longer exist', async ({ booker, world }) => {
 });
 
 /** Puts the response body in the failure message, so a red run needs no re-run to diagnose. */
-async function responseDetail(response: { status(): number; text(): Promise<string> }) {
+async function responseDetail(response: {
+  status(): number;
+  text(): Promise<string>;
+}): Promise<string> {
   return `unexpected status ${response.status()}, body: ${(await response.text()).slice(0, 300)}`;
 }

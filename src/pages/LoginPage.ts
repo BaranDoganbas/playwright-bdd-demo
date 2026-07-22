@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { type Page, type Locator, expect } from '@playwright/test';
 import { env } from '../config/env';
 
 export class LoginPage {
@@ -14,7 +14,7 @@ export class LoginPage {
     this.errorMessage = page.locator('[data-test="error"]');
   }
 
-  async goto() {
+  async goto(): Promise<void> {
     await this.page.goto('/');
   }
 
@@ -22,13 +22,13 @@ export class LoginPage {
    * Password defaults to the shared demo password: SauceDemo accepts it for every
    * account, so scenarios only name the user unless the password itself is the subject.
    */
-  async signInAs(user: string, password: string = env.users.standard.password) {
+  async signInAs(user: string, password: string = env.users.standard.password): Promise<void> {
     await this.username.fill(user);
     await this.password.fill(password);
     await this.loginButton.click();
   }
 
-  async expectError(message: string) {
+  async expectError(message: string): Promise<void> {
     await expect(this.errorMessage).toContainText(message);
   }
 }
