@@ -1,6 +1,8 @@
+@api @regression
 Feature: Booking API
   CRUD lifecycle of a booking via RESTful Booker, including token-based auth.
 
+  @smoke
   Scenario: Full booking lifecycle: create, read, update, delete
     Given I have an auth token
     When I create a booking
