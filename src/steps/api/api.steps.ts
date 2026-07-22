@@ -1,67 +1,81 @@
-import { expect, APIResponse } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
 import { test } from '../../fixtures/fixtures';
+import { aBooking, type Booking } from '../../data/booking';
+import type { CreateBookingResponse } from '../../api/booker.client';
+import { fromWorld } from '../../support/preconditions';
 
 const { Given, When, Then } = createBdd(test);
 
-const samplePayload = {
-  firstname: 'Baran',
-  lastname: 'Doganbas',
-  totalprice: 150,
-  depositpaid: true,
-  bookingdates: { checkin: '2026-08-01', checkout: '2026-08-05' },
-  additionalneeds: 'Late checkout',
-};
-
-Given('I have an auth token', async ({ request, world }) => {
-  const res = await request.post('/auth', {
-    data: { username: 'admin', password: 'password123' },
-  });
-  expect(res.ok()).toBeTruthy();
-  const { token } = await res.json();
-  expect(token, 'auth endpoint should return a token').toBeTruthy();
-  world.token = token;
+Given('I have an auth token', async ({ booker, world }) => {
+  world.token = await booker.requestToken();
+  expect(world.token, 'auth endpoint should return a token').toBeTruthy();
 });
 
-When('I create a booking', async ({ request, world }) => {
-  const res = await request.post('/booking', { data: samplePayload });
-  expect(res.status()).toBe(200);
-  const body = await res.json();
+When('I create a booking', async ({ booker, world }) => {
+  // Built fresh per scenario: the sandbox persists writes, so a fixed payload
+  // would collide with parallel workers and with other users of the public API.
+  const booking = aBooking();
+
+  const response = await booker.createBooking(booking);
+  expect(response.status(), await responseDetail(response)).toBe(200);
+
+  const body = (await response.json()) as CreateBookingResponse;
+  expect(body.bookingid, 'response should contain a booking id').toBeTruthy();
+
+  world.booking = booking;
   world.bookingId = body.bookingid;
-  expect(world.bookingId, 'response should contain a booking id').toBeTruthy();
 });
 
-Then('I can fetch the booking and it matches what I sent', async ({ request, world }) => {
-  const res = await request.get(`/booking/${world.bookingId}`);
-  expect(res.status()).toBe(200);
-  const body = await res.json();
-  expect(body.firstname).toBe(samplePayload.firstname);
-  expect(body.totalprice).toBe(samplePayload.totalprice);
-  expect(body.bookingdates.checkin).toBe(samplePayload.bookingdates.checkin);
+Then('I can fetch the booking and it matches what I sent', async ({ booker, world }) => {
+  const sent = fromWorld(world.booking, 'booking', 'When I create a booking');
+  const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+
+  const response = await booker.getBooking(id);
+  expect(response.status()).toBe(200);
+
+  const body = (await response.json()) as Booking;
+  // Compared whole rather than field by field: a silently dropped field is a real
+  // defect, and asserting the object catches it without listing every key here.
+  expect(body).toMatchObject(sent);
 });
 
-When('I update the booking total price to {int}', async ({ request, world }, price: number) => {
-  const res = await request.patch(`/booking/${world.bookingId}`, {
-    headers: { Cookie: `token=${world.token}` },
-    data: { totalprice: price },
-  });
-  expect(res.status()).toBe(200);
+When('I update the booking total price to {int}', async ({ booker, world }, price: number) => {
+  const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+  const token = fromWorld(world.token, 'token', 'Given I have an auth token');
+
+  const response = await booker.updateBooking(id, token, { totalprice: price });
+  expect(response.status(), await responseDetail(response)).toBe(200);
 });
 
-Then('the booking total price should be {int}', async ({ request, world }, price: number) => {
-  const res = await request.get(`/booking/${world.bookingId}`);
-  const body = await res.json();
+Then('the booking total price should be {int}', async ({ booker, world }, price: number) => {
+  const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+
+  const response = await booker.getBooking(id);
+  expect(response.status()).toBe(200);
+
+  const body = (await response.json()) as Booking;
   expect(body.totalprice).toBe(price);
 });
 
-When('I delete the booking', async ({ request, world }) => {
-  const res: APIResponse = await request.delete(`/booking/${world.bookingId}`, {
-    headers: { Cookie: `token=${world.token}` },
-  });
-  expect([200, 201]).toContain(res.status());
+When('I delete the booking', async ({ booker, world }) => {
+  const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+  const token = fromWorld(world.token, 'token', 'Given I have an auth token');
+
+  const response = await booker.deleteBooking(id, token);
+  // The API answers 201 to a successful DELETE; 200 is accepted in case it is
+  // ever corrected to the conventional status.
+  expect([200, 201], await responseDetail(response)).toContain(response.status());
 });
 
-Then('the booking should no longer exist', async ({ request, world }) => {
-  const res = await request.get(`/booking/${world.bookingId}`);
-  expect(res.status()).toBe(404);
+Then('the booking should no longer exist', async ({ booker, world }) => {
+  const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+
+  const response = await booker.getBooking(id);
+  expect(response.status()).toBe(404);
 });
+
+/** Puts the response body in the failure message, so a red run needs no re-run to diagnose. */
+async function responseDetail(response: { status(): number; text(): Promise<string> }) {
+  return `unexpected status ${response.status()}, body: ${(await response.text()).slice(0, 300)}`;
+}

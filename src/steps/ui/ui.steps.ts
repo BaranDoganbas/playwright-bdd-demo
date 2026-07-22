@@ -1,4 +1,3 @@
-import { expect } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
 import { test } from '../../fixtures/fixtures';
 
@@ -42,9 +41,7 @@ When('I sort products by price low to high', async ({ inventoryPage }) => {
 });
 
 Then('products should be ordered by ascending price', async ({ inventoryPage }) => {
-  const prices = await inventoryPage.itemPrices();
-  const sorted = [...prices].sort((a, b) => a - b);
-  expect(prices).toEqual(sorted);
+  await inventoryPage.expectPricesAscending();
 });
 
 Then('the cart badge should show {int}', async ({ inventoryPage }, count: number) => {
