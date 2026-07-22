@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { env } from '../config/env';
 
 export class LoginPage {
   readonly username: Locator;
@@ -17,7 +18,11 @@ export class LoginPage {
     await this.page.goto('/');
   }
 
-  async signInAs(user: string, password = 'secret_sauce') {
+  /**
+   * Password defaults to the shared demo password: SauceDemo accepts it for every
+   * account, so scenarios only name the user unless the password itself is the subject.
+   */
+  async signInAs(user: string, password: string = env.users.standard.password) {
     await this.username.fill(user);
     await this.password.fill(password);
     await this.loginButton.click();

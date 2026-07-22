@@ -1,18 +1,31 @@
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddProject, cucumberReporter } from 'playwright-bdd';
+import { env } from './src/config/env';
 
-const STORAGE_STATE = '.auth/user.json';
+/**
+ * `tags` comes from the TAGS variable, so every project honours the same tag
+ * expression and `npm run test:smoke` filters the whole suite in one pass.
+ * Step scope stays per-project: a UI project that could resolve an API step would
+ * hide a genuinely missing step definition behind an accidental match.
+ */
+const uiSteps = ['src/steps/ui/**/*.ts', 'src/fixtures/fixtures.ts'];
+const apiSteps = ['src/steps/api/**/*.ts', 'src/fixtures/fixtures.ts'];
+const tags = env.run.tags;
 
 export default defineConfig({
   timeout: 30_000,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  expect: { timeout: 10_000 },
+  retries: env.run.retries,
+  workers: env.run.workers,
+  /** A stray `.only` should fail the CI run rather than silently skip the suite. */
+  forbidOnly: env.isCI,
   reporter: [
     cucumberReporter('html', { outputFile: 'cucumber-report/index.html' }),
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list'],
   ],
   use: {
+    headless: env.run.headless,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -22,6 +35,7 @@ export default defineConfig({
       name: 'setup',
       testDir: './src/setup',
       testMatch: /auth\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'], baseURL: env.ui.baseURL },
     },
 
     // 2) Authentication flows: intentionally unauthenticated (login itself is under test)
@@ -29,11 +43,12 @@ export default defineConfig({
       ...defineBddProject({
         name: 'auth',
         features: 'features/auth/**/*.feature',
-        steps: ['src/steps/ui/**/*.ts', 'src/fixtures/fixtures.ts'],
+        steps: uiSteps,
+        tags,
       }),
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: 'https://www.saucedemo.com',
+        baseURL: env.ui.baseURL,
       },
     },
 
@@ -42,13 +57,14 @@ export default defineConfig({
       ...defineBddProject({
         name: 'ui',
         features: 'features/ui/**/*.feature',
-        steps: ['src/steps/ui/**/*.ts', 'src/fixtures/fixtures.ts'],
+        steps: uiSteps,
+        tags,
       }),
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: 'https://www.saucedemo.com',
-        storageState: STORAGE_STATE,
+        baseURL: env.ui.baseURL,
+        storageState: env.ui.storageState,
       },
     },
 
@@ -57,13 +73,12 @@ export default defineConfig({
       ...defineBddProject({
         name: 'api',
         features: 'features/api/**/*.feature',
-        steps: ['src/steps/api/**/*.ts', 'src/fixtures/fixtures.ts'],
+        steps: apiSteps,
+        tags,
       }),
       use: {
-        baseURL: 'https://restful-booker.herokuapp.com',
+        baseURL: env.api.baseURL,
       },
     },
   ],
 });
-
-export { STORAGE_STATE };
