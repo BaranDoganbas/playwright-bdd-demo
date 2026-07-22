@@ -1,0 +1,7 @@
+.features-gen/
+node_modules/
+playwright-report/
+cucumber-report/
+test-results/
+.auth/
+package-lock.json

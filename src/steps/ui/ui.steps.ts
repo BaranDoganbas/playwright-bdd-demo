@@ -13,9 +13,12 @@ When('I sign in as {string}', async ({ loginPage }, user: string) => {
   await loginPage.signInAs(user);
 });
 
-When('I sign in as {string} with password {string}', async ({ loginPage }, user: string, password: string) => {
-  await loginPage.signInAs(user, password);
-});
+When(
+  'I sign in as {string} with password {string}',
+  async ({ loginPage }, user: string, password: string) => {
+    await loginPage.signInAs(user, password);
+  },
+);
 
 Then('I should see the inventory dashboard', async ({ inventoryPage }) => {
   await inventoryPage.expectLoaded();

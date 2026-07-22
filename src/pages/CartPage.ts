@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { type Page, type Locator, expect } from '@playwright/test';
 
 export class CartPage {
   readonly items: Locator;
@@ -9,15 +9,15 @@ export class CartPage {
     this.checkoutButton = page.locator('[data-test="checkout"]');
   }
 
-  async expectItem(productName: string) {
+  async expectItem(productName: string): Promise<void> {
     await expect(this.items.filter({ hasText: productName })).toBeVisible();
   }
 
-  async expectItemCount(count: number) {
+  async expectItemCount(count: number): Promise<void> {
     await expect(this.items).toHaveCount(count);
   }
 
-  async checkout() {
+  async checkout(): Promise<void> {
     await this.checkoutButton.click();
   }
 }

@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { type Page, type Locator, expect } from '@playwright/test';
 
 export class InventoryPage {
   readonly container: Locator;
@@ -17,20 +17,20 @@ export class InventoryPage {
     this.cartLink = page.locator('[data-test="shopping-cart-link"]');
   }
 
-  async goto() {
+  async goto(): Promise<void> {
     await this.page.goto('/inventory.html');
   }
 
-  async expectLoaded() {
+  async expectLoaded(): Promise<void> {
     await expect(this.container).toBeVisible();
   }
 
-  async addToCart(productName: string) {
+  async addToCart(productName: string): Promise<void> {
     const slug = productName.toLowerCase().replace(/\s+/g, '-');
     await this.page.locator(`[data-test="add-to-cart-${slug}"]`).click();
   }
 
-  async sortBy(option: 'az' | 'za' | 'lohi' | 'hilo') {
+  async sortBy(option: 'az' | 'za' | 'lohi' | 'hilo'): Promise<void> {
     await this.sortSelect.selectOption(option);
   }
 
@@ -54,11 +54,11 @@ export class InventoryPage {
       .toBe('ascending');
   }
 
-  async expectCartCount(count: number) {
+  async expectCartCount(count: number): Promise<void> {
     await expect(this.cartBadge).toHaveText(String(count));
   }
 
-  async openCart() {
+  async openCart(): Promise<void> {
     await this.cartLink.click();
   }
 }
