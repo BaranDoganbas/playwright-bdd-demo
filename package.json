@@ -10,9 +10,20 @@
     "report": "npx playwright show-report",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "playwright",
+    "playwright-bdd",
+    "cucumber",
+    "gherkin",
+    "e2e",
+    "test-automation",
+    "typescript"
+  ],
+  "author": "Baran Doğanbaş",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@types/node": "^26.1.1",
