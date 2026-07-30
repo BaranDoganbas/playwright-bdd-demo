@@ -29,7 +29,7 @@ No `.env` is required. Every setting defaults to the public demo targets describ
 
 | Command                   | Runs                                              |
 | ------------------------- | ------------------------------------------------- |
-| `npm test`                | Everything: 8 scenarios plus the auth setup       |
+| `npm test`                | Everything: 26 scenarios plus the auth setup      |
 | `npm run test:smoke`      | The 3 `@smoke` scenarios (~5s)                    |
 | `npm run test:regression` | The full `@regression` set                        |
 | `npm run test:ui`         | `setup` + `auth` + `ui` projects                  |
@@ -60,7 +60,7 @@ TAGS='@smoke and not @api' npm test        # by tag expression, at generation ti
 │   ├── api/         # BookerClient: transport policy + typed responses
 │   ├── config/      # env.ts, the only reader of process.env
 │   ├── data/        # test-data builders (aBooking)
-│   ├── pages/       # Page Objects (Login, Inventory, Cart, Checkout)
+│   ├── pages/       # Page Objects (Login, Inventory, Product, Cart, Checkout, AppMenu)
 │   ├── steps/       # step definitions (ui / api)
 │   ├── fixtures/    # custom test with injected page objects, client, world
 │   ├── setup/       # auth.setup.ts, persists storage state
@@ -86,6 +86,23 @@ flowchart LR
     T --> R1[Cucumber HTML report<br/>to GitHub Pages]
     T --> R2[Playwright report<br/>CI artifact]
 ```
+
+## What the suite covers
+
+| Area         | Scenarios                                                                       |
+| ------------ | ------------------------------------------------------------------------------- |
+| Sign-in      | Successful sign-in, locked-out account, wrong password, unknown user            |
+| Session      | Three protected pages refuse a signed-out visitor; logout ends the session      |
+| Catalogue    | All four sort orders, product page agrees with the catalogue price              |
+| Cart         | Add one, add several from a table, remove, badge count                          |
+| Checkout     | Happy path, each required field missing, item total plus tax equals order total |
+| Booking API  | Full CRUD lifecycle, full replacement, search by guest name, health check       |
+| API auth     | A write without a token is refused and leaves the booking untouched             |
+| Missing data | An unknown booking id answers 404                                               |
+
+Negative paths are deliberately over-represented relative to their share of the happy path.
+An E2E suite that only walks the golden route tells you the demo works, not that the system
+holds.
 
 ## Design notes
 
