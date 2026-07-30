@@ -7,16 +7,14 @@ export class CheckoutPage {
   readonly continueButton: Locator;
   readonly finishButton: Locator;
   readonly completeHeader: Locator;
-  readonly totalLabel: Locator;
 
   constructor(private readonly page: Page) {
-    this.firstName = page.locator('[data-test="firstName"]');
-    this.lastName = page.locator('[data-test="lastName"]');
-    this.postalCode = page.locator('[data-test="postalCode"]');
-    this.continueButton = page.locator('[data-test="continue"]');
-    this.finishButton = page.locator('[data-test="finish"]');
-    this.completeHeader = page.locator('[data-test="complete-header"]');
-    this.totalLabel = page.locator('[data-test="total-label"]');
+    this.firstName = page.getByTestId('firstName');
+    this.lastName = page.getByTestId('lastName');
+    this.postalCode = page.getByTestId('postalCode');
+    this.continueButton = page.getByTestId('continue');
+    this.finishButton = page.getByTestId('finish');
+    this.completeHeader = page.getByTestId('complete-header');
   }
 
   async fillCustomerInfo(firstName: string, lastName: string, postalCode: string): Promise<void> {
