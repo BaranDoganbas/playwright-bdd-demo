@@ -1,4 +1,4 @@
-import { createBdd } from 'playwright-bdd';
+import { createBdd, type DataTable } from 'playwright-bdd';
 import { test } from '../../fixtures/fixtures';
 
 const { Given, When, Then } = createBdd(test);
@@ -37,6 +37,19 @@ Given('I am on the inventory page', async ({ inventoryPage }) => {
 
 When('I add {string} to the cart', async ({ inventoryPage }, productName: string) => {
   await inventoryPage.addToCart(productName);
+});
+
+// Table form for the multi-product case: adding a product is a row rather than
+// another `And I add "..." to the cart` line. A mistyped column header fails here
+// with a readable message instead of quietly adding nothing to the cart.
+When('I add the following products to the cart:', async ({ inventoryPage }, table: DataTable) => {
+  for (const row of table.hashes()) {
+    const product = row.product;
+    if (!product) {
+      throw new Error(`Every row needs a non-empty "product" column, got: ${JSON.stringify(row)}`);
+    }
+    await inventoryPage.addToCart(product);
+  }
 });
 
 When('I sort products by price low to high', async ({ inventoryPage }) => {
