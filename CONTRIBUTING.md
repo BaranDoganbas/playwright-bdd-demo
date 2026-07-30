@@ -30,7 +30,10 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
 
 ## Adding a scenario to an existing feature
 
-1. Write the scenario in the relevant file under `features/`.
+1. Write the scenario in the relevant file under `features/`. If it differs from an existing one
+   only by its input values, add a row to that scenario's `Examples` table, or convert it to a
+   `Scenario Outline` if it isn't one yet. A step that repeats with different values usually wants
+   a data table instead.
 2. Tag it. `@regression` is inherited from the feature and needs no repeating; add `@smoke` only
    if the suite would be meaningless without it (see the tagging section in the README).
 3. Run `npm test`. `bddgen` regenerates the specs and reports any step it cannot resolve, with a
@@ -95,7 +98,7 @@ export class InventoryPage {
   readonly container: Locator;
 
   constructor(private readonly page: Page) {
-    this.container = page.locator('[data-test="inventory-container"]');
+    this.container = page.getByTestId('inventory-container');
   }
 
   async expectLoaded(): Promise<void> {
@@ -104,7 +107,10 @@ export class InventoryPage {
 }
 ```
 
-- Prefer `[data-test="..."]` selectors. They are a stability contract with the developers.
+- Address elements with `getByTestId('...')`. `testIdAttribute` is set to `data-test` in
+  `playwright.config.ts`, so this resolves the attribute the app ships, and those attributes are a
+  stability contract with the developers. Reach for a CSS or text selector only when no test id
+  exists, and ask for one to be added.
 - Name assertion methods `expectSomething()`. ESLint's `expect-expect` rule is configured to treat
   that prefix as an assertion, so a differently named one will make tests look assertion-free.
 - Give every method an explicit return type; the linter enforces this.
