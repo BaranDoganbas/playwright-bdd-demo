@@ -41,10 +41,7 @@ export class InventoryPage {
     return this.items.filter({ hasText: productName });
   }
 
-  /**
-   * SauceDemo derives the button's test id from the product name, so the slug is
-   * built the same way rather than mapping every product by hand.
-   */
+  /** SauceDemo builds the button's test id from the product name, so we do the same. */
   async addToCart(productName: string): Promise<void> {
     const slug = productName.toLowerCase().replace(/\s+/g, '-');
     await this.page.getByTestId(`add-to-cart-${slug}`).click();
@@ -74,9 +71,8 @@ export class InventoryPage {
   }
 
   /**
-   * Sorting is applied client-side, so reading the list straight after `sortBy` can
-   * observe the pre-sort DOM. `expect.poll` re-reads until the order settles and
-   * reports the list it saw, which beats a sleep and beats a bare boolean.
+   * The sort is client-side, so reading straight after `sortBy` can catch the pre-sort
+   * DOM. `expect.poll` re-reads until it settles and prints the list it saw.
    */
   async expectSortedBy(field: SortField, direction: SortDirection): Promise<void> {
     await expect

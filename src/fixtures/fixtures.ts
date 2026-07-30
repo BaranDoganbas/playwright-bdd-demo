@@ -10,11 +10,10 @@ import type { Booking } from '../data/booking';
 import type { APIResponse } from '@playwright/test';
 
 /**
- * Scratchpad for passing values between steps within a single scenario.
+ * Scratchpad for passing values between steps within one scenario.
  *
- * Typed rather than `Record<string, unknown>`: steps read these fields without
- * casting, and a typo in a field name is a compile error instead of `undefined`
- * surfacing three steps later.
+ * Typed, so steps read these fields without casting and a mistyped field name is a
+ * compile error, not an `undefined` that surfaces three steps later.
  */
 export type World = {
   token?: string;

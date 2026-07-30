@@ -8,9 +8,8 @@ import { InventoryPage } from '../pages/InventoryPage';
  * Signs in as the standard user and persists storage state, so functional
  * scenarios never waste time re-running login.
  *
- * Drives the same page objects as the tests, so if a selector on the login page
- * changes this fails with the same clear error the `auth` suite gives, instead of a
- * mystery timeout in every downstream scenario.
+ * Uses the same page objects as the tests, so a changed login selector fails here with
+ * a clear error, not as a mystery timeout in every scenario downstream.
  */
 setup(
   `authenticate as ${env.users.standard.username}`,

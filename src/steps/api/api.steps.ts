@@ -35,8 +35,8 @@ Then('I can fetch the booking and it matches what I sent', async ({ booker, worl
   expect(response.status()).toBe(200);
 
   const body = (await response.json()) as Booking;
-  // Compared whole rather than field by field: a silently dropped field is a real
-  // defect, and asserting the object catches it without listing every key here.
+  // Whole object, not field by field: a silently dropped field is a real defect and
+  // this catches it without listing every key.
   expect(body).toMatchObject(sent);
 });
 

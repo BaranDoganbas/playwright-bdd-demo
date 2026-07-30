@@ -46,10 +46,9 @@ export class CheckoutPage {
   }
 
   /**
-   * The summary is the one place the shop does arithmetic in front of the customer, so
-   * it is asserted as arithmetic rather than against a hardcoded total: the test stays
-   * valid if the catalogue price or the tax rate changes, and still fails if the sum
-   * stops adding up. Compared in whole cents to avoid float noise.
+   * Checks the summary arithmetic. Computed, not compared against a hardcoded total,
+   * so a price or tax change doesn't break the test while a broken sum still does.
+   * Whole cents, to keep floats out of it.
    */
   async expectTotalAddsUp(): Promise<void> {
     const subtotal = parseMoney(await this.subtotalLabel.innerText());

@@ -8,12 +8,10 @@ export type CreateBookingResponse = {
 };
 
 /**
- * Thin typed wrapper over Playwright's `request` fixture.
+ * Typed wrapper over Playwright's `request` fixture. Keeps transport policy
+ * (timeouts, the token retry) and response typing out of the step definitions.
  *
- * It exists to keep two things out of the step definitions: the transport policy
- * (per-request timeout, retry on the token call) and response typing. Steps stay
- * about behaviour and keep every assertion. The client never asserts, so a retry
- * cannot mask a failing expectation.
+ * Nothing in here asserts. That is what makes the retry below safe.
  */
 export class BookerClient {
   constructor(private readonly request: APIRequestContext) {}
@@ -24,13 +22,10 @@ export class BookerClient {
   }
 
   /**
-   * Obtains an auth token, retrying the call itself on transport errors or a
-   * non-200 response.
+   * Gets an auth token, retrying on transport errors and non-200 responses.
    *
-   * This is the only retried request in the suite. The token call is a precondition
-   * rather than a subject under test, and it is the one place where a sandbox cold
-   * start turns an otherwise healthy run red. Every assertion, including those about
-   * auth-protected writes, still runs exactly once.
+   * The only retried request in the suite. It is a precondition, not a subject under
+   * test, and it is where a sandbox cold start turns a healthy run red.
    */
   async requestToken(): Promise<string> {
     const attempts = env.api.tokenRetries;
@@ -66,7 +61,7 @@ export class BookerClient {
     );
   }
 
-  /** Health endpoint. Answers 201 rather than 200, which is why callers assert on it. */
+  /** Health endpoint. Answers 201, not 200, which is why the scenario pins it. */
   ping(): Promise<APIResponse> {
     return this.request.get('/ping', { timeout: this.timeout });
   }
@@ -93,9 +88,10 @@ export class BookerClient {
   }
 
   /**
-   * Deliberately unauthenticated write, so a scenario can prove the endpoint refuses
-   * it. Kept as its own method rather than an optional token argument: an accidentally
-   * undefined token would otherwise turn an authorised test into this one silently.
+   * Unauthenticated write, so a scenario can check the endpoint refuses it.
+   *
+   * Its own method, not an optional token argument: with an optional argument an
+   * undefined token would silently turn an authorised test into this one.
    */
   updateBookingUnauthenticated(id: number, patch: Partial<Booking>): Promise<APIResponse> {
     return this.request.patch(`/booking/${id}`, { data: patch, timeout: this.timeout });
