@@ -1,8 +1,7 @@
 /**
- * SauceDemo renders money as `$29.99`, sometimes behind a label such as
- * `Item total: $29.99`. Parsing here keeps the regex in one place and fails with the
- * text it actually saw, rather than producing a silent NaN that surfaces as a
- * confusing assertion diff further down.
+ * SauceDemo renders money as `$29.99`, sometimes behind a label like
+ * `Item total: $29.99`. Keeps the regex in one place, and throws with the text it saw
+ * so a bad read doesn't become a silent NaN in an assertion diff.
  */
 export function parseMoney(text: string): number {
   const match = /\$\s*(\d+(?:\.\d{1,2})?)/.exec(text);

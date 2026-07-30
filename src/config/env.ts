@@ -1,14 +1,10 @@
 import { config as loadDotenv } from 'dotenv';
 
 /**
- * Single source of truth for every environment-dependent value in the suite.
+ * Every environment-dependent value in the suite. Nothing outside this module reads
+ * `process.env`, which keeps credentials and URLs out of the test code.
  *
- * Nothing outside this module reads `process.env`. Page objects, step definitions,
- * setup projects and `playwright.config.ts` all import the typed `env` object below,
- * which keeps credentials and URLs out of test code.
- *
- * Values from the real process environment win over `.env`, so CI secrets override a
- * developer's local file rather than the other way round.
+ * Real environment variables win over `.env`, so CI secrets override a local file.
  */
 loadDotenv({ quiet: true });
 
@@ -22,12 +18,10 @@ function fail(variable: string, reason: string): void {
 /**
  * Reads a required string variable.
  *
- * `fallback` is supplied only for values targeting the public demo systems this suite
- * runs against (see the Targets table in the README). Those credentials are published
- * on the sites themselves, and defaulting them is what lets `npm test` work on a fresh
- * clone. Omitting `fallback` makes the variable hard-required: the run aborts before
- * any test starts, which is what you want when pointing this framework at a real
- * environment.
+ * `fallback` is only supplied for the public demo systems, whose credentials are
+ * published on the sites themselves. That is what lets `npm test` work on a fresh
+ * clone. Omitting `fallback` makes the variable hard-required, which is what you want
+ * when pointing this at a real environment.
  */
 function str(variable: string, fallback?: string): string {
   const raw = process.env[variable]?.trim();
@@ -46,7 +40,7 @@ function str(variable: string, fallback?: string): string {
 function url(variable: string, fallback: string): string {
   const value = str(variable, fallback);
   try {
-    // Reject typos like "saucedemo.com" early rather than at first navigation.
+    // Catch typos like "saucedemo.com" here, not at the first navigation.
     new URL(value);
   } catch {
     fail(variable, `must be an absolute URL (got "${value}")`);

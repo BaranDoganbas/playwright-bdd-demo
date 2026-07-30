@@ -100,9 +100,9 @@ When('I add {string} to the cart', async ({ inventoryPage }, productName: string
   await inventoryPage.addToCart(productName);
 });
 
-// Table form for the multi-product case: adding a product is a row rather than
-// another `And I add "..." to the cart` line. A mistyped column header fails here
-// with a readable message instead of quietly adding nothing to the cart.
+// Table form for the multi-product case, so adding a product is one more row.
+// The column check makes a mistyped header fail loudly; without it the step would
+// happily add nothing.
 When('I add the following products to the cart:', async ({ inventoryPage }, table: DataTable) => {
   for (const row of table.hashes()) {
     const product = row.product;

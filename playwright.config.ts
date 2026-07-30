@@ -3,10 +3,8 @@ import { defineBddProject, cucumberReporter } from 'playwright-bdd';
 import { env } from './src/config/env';
 
 /**
- * `tags` comes from the TAGS variable, so every project honours the same tag
- * expression and `npm run test:smoke` filters the whole suite in one pass.
- * Step scope stays per-project: a UI project that could resolve an API step would
- * hide a genuinely missing step definition behind an accidental match.
+ * Step scope is per-project on purpose. If the UI project could resolve an API step,
+ * a genuinely missing step definition would hide behind the accidental match.
  */
 const uiSteps = ['src/steps/ui/**/*.ts', 'src/fixtures/fixtures.ts'];
 const apiSteps = ['src/steps/api/**/*.ts', 'src/fixtures/fixtures.ts'];
@@ -35,11 +33,7 @@ export default defineConfig({
     headless: env.run.headless,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    /**
-     * Makes `getByTestId('username')` resolve the `data-test` attribute the app
-     * actually ships, so page objects express intent instead of repeating an
-     * attribute selector. Changing the convention is then a one-line change here.
-     */
+    /** Points `getByTestId()` at the attribute the app ships. */
     testIdAttribute: 'data-test',
   },
   projects: [
