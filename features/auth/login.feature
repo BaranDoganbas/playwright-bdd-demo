@@ -1,6 +1,7 @@
 @ui @auth @regression
 Feature: Authentication
-  Sign-in behavior for valid, invalid and locked-out users.
+  Sign-in behavior for valid, invalid and locked-out users, and what an
+  unauthenticated visitor is allowed to reach.
 
   Background:
     Given I am on the login page
@@ -17,7 +18,17 @@ Feature: Authentication
     Then I should see the login error "<message>"
 
     Examples:
-      | case                        | user            | password       | message                               |
-      | locked out account          | locked_out_user | secret_sauce   | Sorry, this user has been locked out. |
-      | wrong password              | standard_user   | wrong_password | Username and password do not match    |
-      | unknown user                | no_such_user    | secret_sauce   | Username and password do not match    |
+      | case               | user            | password       | message                               |
+      | locked out account | locked_out_user | secret_sauce   | Sorry, this user has been locked out. |
+      | wrong password     | standard_user   | wrong_password | Username and password do not match    |
+      | unknown user       | no_such_user    | secret_sauce   | Username and password do not match    |
+
+  Scenario Outline: A signed-out visitor cannot reach <page>
+    When I navigate straight to "<page>"
+    Then I should see the login error "You can only access '<page>' when you are logged in."
+
+    Examples:
+      | page                  |
+      | /inventory.html       |
+      | /cart.html            |
+      | /checkout-step-one.html |

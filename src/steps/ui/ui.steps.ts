@@ -1,5 +1,14 @@
 import { createBdd, type DataTable } from 'playwright-bdd';
 import { test } from '../../fixtures/fixtures';
+import {
+  SORT_OPTIONS,
+  SORT_FIELDS,
+  SORT_DIRECTIONS,
+  type SortOption,
+  type SortField,
+  type SortDirection,
+} from '../../pages/InventoryPage';
+import { assertOneOf, fromWorld } from '../../support/preconditions';
 
 const { Given, When, Then } = createBdd(test);
 
@@ -20,6 +29,10 @@ When(
   },
 );
 
+When('I navigate straight to {string}', async ({ loginPage }, path: string) => {
+  await loginPage.goto(path);
+});
+
 Then('I should see the inventory dashboard', async ({ inventoryPage }) => {
   await inventoryPage.expectLoaded();
 });
@@ -28,12 +41,60 @@ Then('I should see the login error {string}', async ({ loginPage }, message: str
   await loginPage.expectError(message);
 });
 
-// ---------- Inventory & cart ----------
+Then('I should be back on the login page', async ({ loginPage }) => {
+  await loginPage.expectLoaded();
+});
+
+When('I log out', async ({ appMenu }) => {
+  await appMenu.logout();
+});
+
+// ---------- Catalogue ----------
 
 Given('I am on the inventory page', async ({ inventoryPage }) => {
   await inventoryPage.goto();
   await inventoryPage.expectLoaded();
 });
+
+When('I sort products by {string}', async ({ inventoryPage }, option: string) => {
+  await inventoryPage.sortBy(assertOneOf<SortOption>(option, SORT_OPTIONS, 'Sort option'));
+});
+
+Then(
+  'the product {string} should be in {string} order',
+  async ({ inventoryPage }, field: string, direction: string) => {
+    await inventoryPage.expectSortedBy(
+      assertOneOf<SortField>(field, SORT_FIELDS, 'Sort field'),
+      assertOneOf<SortDirection>(direction, SORT_DIRECTIONS, 'Sort direction'),
+    );
+  },
+);
+
+When(
+  'I note the catalogue price of {string}',
+  async ({ inventoryPage, world }, product: string) => {
+    world.notedPrice = await inventoryPage.priceOf(product);
+  },
+);
+
+When('I open the product {string}', async ({ inventoryPage }, product: string) => {
+  await inventoryPage.openProduct(product);
+});
+
+Then('the product page should show {string}', async ({ productPage }, product: string) => {
+  await productPage.expectShowing(product);
+});
+
+Then('the product page should show the noted price', async ({ productPage, world }) => {
+  const price = fromWorld(
+    world.notedPrice,
+    'notedPrice',
+    'When I note the catalogue price of "..."',
+  );
+  await productPage.expectPrice(price);
+});
+
+// ---------- Cart ----------
 
 When('I add {string} to the cart', async ({ inventoryPage }, productName: string) => {
   await inventoryPage.addToCart(productName);
@@ -52,20 +113,16 @@ When('I add the following products to the cart:', async ({ inventoryPage }, tabl
   }
 });
 
-When('I sort products by price low to high', async ({ inventoryPage }) => {
-  await inventoryPage.sortBy('lohi');
-});
-
-Then('products should be ordered by ascending price', async ({ inventoryPage }) => {
-  await inventoryPage.expectPricesAscending();
-});
-
 Then('the cart badge should show {int}', async ({ inventoryPage }, count: number) => {
   await inventoryPage.expectCartCount(count);
 });
 
 When('I open the cart', async ({ inventoryPage }) => {
   await inventoryPage.openCart();
+});
+
+When('I remove {string} from the cart', async ({ cartPage }, productName: string) => {
+  await cartPage.remove(productName);
 });
 
 Then('the cart should contain {string}', async ({ cartPage }, productName: string) => {
@@ -88,6 +145,14 @@ When(
     await checkoutPage.fillCustomerInfo(firstName, lastName, postalCode);
   },
 );
+
+Then('I should see the checkout error {string}', async ({ checkoutPage }, message: string) => {
+  await checkoutPage.expectError(message);
+});
+
+Then('the order total should equal the item total plus tax', async ({ checkoutPage }) => {
+  await checkoutPage.expectTotalAddsUp();
+});
 
 When('I finish the order', async ({ checkoutPage }) => {
   await checkoutPage.finish();
