@@ -75,6 +75,84 @@ Then('the booking should no longer exist', async ({ booker, world }) => {
   expect(response.status()).toBe(404);
 });
 
+// ---------- Health ----------
+
+When('I call the health endpoint', async ({ booker, world }) => {
+  world.lastResponse = await booker.ping();
+});
+
+Then('the service should report itself up', async ({ world }) => {
+  const response = fromWorld(world.lastResponse, 'lastResponse', 'When I call the health endpoint');
+  expect(response.status(), await responseDetail(response)).toBe(201);
+});
+
+// ---------- Search ----------
+
+Then("the booking should be listed under the guest's name", async ({ booker, world }) => {
+  const sent = fromWorld(world.booking, 'booking', 'When I create a booking');
+  const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+
+  const response = await booker.findBookings(sent.firstname, sent.lastname);
+  expect(response.status(), await responseDetail(response)).toBe(200);
+
+  const matches = (await response.json()) as { bookingid: number }[];
+  expect(
+    matches.map((match) => match.bookingid),
+    'filtered search should return the booking that was just created',
+  ).toContain(id);
+});
+
+// ---------- Full replacement ----------
+
+When('I replace the booking with a new payload', async ({ booker, world }) => {
+  const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+  const token = fromWorld(world.token, 'token', 'Given I have an auth token');
+
+  const replacement = aBooking({
+    firstname: 'Replaced',
+    totalprice: 275,
+    depositpaid: false,
+    additionalneeds: 'Early check-in',
+  });
+
+  const response = await booker.replaceBooking(id, token, replacement);
+  expect(response.status(), await responseDetail(response)).toBe(200);
+
+  // Later steps assert against what was last sent, so the world moves on with it.
+  world.booking = replacement;
+});
+
+// ---------- Authorisation ----------
+
+When('I try to update the booking without a token', async ({ booker, world }) => {
+  const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+  world.lastResponse = await booker.updateBookingUnauthenticated(id, { totalprice: 1 });
+});
+
+Then('the request should be refused as forbidden', async ({ world }) => {
+  const response = fromWorld(
+    world.lastResponse,
+    'lastResponse',
+    'When I try to update the booking without a token',
+  );
+  expect(response.status(), await responseDetail(response)).toBe(403);
+});
+
+// ---------- Missing resources ----------
+
+When('I fetch the booking with id {int}', async ({ booker, world }, id: number) => {
+  world.lastResponse = await booker.getBooking(id);
+});
+
+Then('the booking should not be found', async ({ world }) => {
+  const response = fromWorld(
+    world.lastResponse,
+    'lastResponse',
+    'When I fetch the booking with id ...',
+  );
+  expect(response.status(), await responseDetail(response)).toBe(404);
+});
+
 /** Puts the response body in the failure message, so a red run needs no re-run to diagnose. */
 async function responseDetail(response: {
   status(): number;

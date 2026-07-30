@@ -66,8 +66,39 @@ export class BookerClient {
     );
   }
 
+  /** Health endpoint. Answers 201 rather than 200, which is why callers assert on it. */
+  ping(): Promise<APIResponse> {
+    return this.request.get('/ping', { timeout: this.timeout });
+  }
+
   createBooking(booking: Booking): Promise<APIResponse> {
     return this.request.post('/booking', { data: booking, timeout: this.timeout });
+  }
+
+  /** Filtered search. The builder randomizes the surname, so this matches one run's data. */
+  findBookings(firstname: string, lastname: string): Promise<APIResponse> {
+    return this.request.get('/booking', {
+      params: { firstname, lastname },
+      timeout: this.timeout,
+    });
+  }
+
+  /** Full replacement. Unlike PATCH, a partial payload here is rejected by the API. */
+  replaceBooking(id: number, token: string, booking: Booking): Promise<APIResponse> {
+    return this.request.put(`/booking/${id}`, {
+      headers: this.authHeaders(token),
+      data: booking,
+      timeout: this.timeout,
+    });
+  }
+
+  /**
+   * Deliberately unauthenticated write, so a scenario can prove the endpoint refuses
+   * it. Kept as its own method rather than an optional token argument: an accidentally
+   * undefined token would otherwise turn an authorised test into this one silently.
+   */
+  updateBookingUnauthenticated(id: number, patch: Partial<Booking>): Promise<APIResponse> {
+    return this.request.patch(`/booking/${id}`, { data: patch, timeout: this.timeout });
   }
 
   getBooking(id: number): Promise<APIResponse> {
