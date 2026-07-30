@@ -14,8 +14,13 @@ export class LoginPage {
     this.errorMessage = page.getByTestId('error');
   }
 
-  async goto(): Promise<void> {
-    await this.page.goto('/');
+  /**
+   * `path` exists so a scenario can request a protected page directly and assert that
+   * the app bounces it back here, which is the only way to test that from the
+   * unauthenticated project.
+   */
+  async goto(path = '/'): Promise<void> {
+    await this.page.goto(path);
   }
 
   /**
@@ -26,6 +31,10 @@ export class LoginPage {
     await this.username.fill(user);
     await this.password.fill(password);
     await this.loginButton.click();
+  }
+
+  async expectLoaded(): Promise<void> {
+    await expect(this.loginButton).toBeVisible();
   }
 
   async expectError(message: string): Promise<void> {

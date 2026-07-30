@@ -1,10 +1,13 @@
 import { test as base } from 'playwright-bdd';
 import { LoginPage } from '../pages/LoginPage';
 import { InventoryPage } from '../pages/InventoryPage';
+import { ProductPage } from '../pages/ProductPage';
 import { CartPage } from '../pages/CartPage';
 import { CheckoutPage } from '../pages/CheckoutPage';
+import { AppMenu } from '../pages/AppMenu';
 import { BookerClient } from '../api/booker.client';
 import type { Booking } from '../data/booking';
+import type { APIResponse } from '@playwright/test';
 
 /**
  * Scratchpad for passing values between steps within a single scenario.
@@ -18,13 +21,19 @@ export type World = {
   bookingId?: number;
   /** The payload that was sent, so later steps can assert round-tripped values. */
   booking?: Booking;
+  /** The last response a step deliberately did not assert on, for the next step to check. */
+  lastResponse?: APIResponse;
+  /** A catalogue price noted before navigating, to compare against the product page. */
+  notedPrice?: number;
 };
 
 type Fixtures = {
   loginPage: LoginPage;
   inventoryPage: InventoryPage;
+  productPage: ProductPage;
   cartPage: CartPage;
   checkoutPage: CheckoutPage;
+  appMenu: AppMenu;
   booker: BookerClient;
   world: World;
 };
@@ -36,11 +45,17 @@ export const test = base.extend<Fixtures>({
   inventoryPage: async ({ page }, use) => {
     await use(new InventoryPage(page));
   },
+  productPage: async ({ page }, use) => {
+    await use(new ProductPage(page));
+  },
   cartPage: async ({ page }, use) => {
     await use(new CartPage(page));
   },
   checkoutPage: async ({ page }, use) => {
     await use(new CheckoutPage(page));
+  },
+  appMenu: async ({ page }, use) => {
+    await use(new AppMenu(page));
   },
   booker: async ({ request }, use) => {
     await use(new BookerClient(request));
