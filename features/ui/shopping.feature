@@ -11,8 +11,10 @@ Feature: Shopping flow
     Then products should be ordered by ascending price
 
   Scenario: Adding products to the cart
-    When I add "Sauce Labs Backpack" to the cart
-    And I add "Sauce Labs Bike Light" to the cart
+    When I add the following products to the cart:
+      | product               |
+      | Sauce Labs Backpack   |
+      | Sauce Labs Bike Light |
     Then the cart badge should show 2
     When I open the cart
     Then the cart should contain 2 items

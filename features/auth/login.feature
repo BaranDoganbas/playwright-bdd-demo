@@ -10,10 +10,14 @@ Feature: Authentication
     When I sign in as "standard_user"
     Then I should see the inventory dashboard
 
-  Scenario: Locked out user is rejected with a clear error
-    When I sign in as "locked_out_user"
-    Then I should see the login error "Sorry, this user has been locked out."
+  # One shape of failure, several causes. Adding a rejected account is a new row
+  # rather than another near-identical scenario.
+  Scenario Outline: Sign-in is rejected: <case>
+    When I sign in as "<user>" with password "<password>"
+    Then I should see the login error "<message>"
 
-  Scenario: Wrong password is rejected without leaking which field failed
-    When I sign in as "standard_user" with password "wrong_password"
-    Then I should see the login error "Username and password do not match"
+    Examples:
+      | case                        | user            | password       | message                               |
+      | locked out account          | locked_out_user | secret_sauce   | Sorry, this user has been locked out. |
+      | wrong password              | standard_user   | wrong_password | Username and password do not match    |
+      | unknown user                | no_such_user    | secret_sauce   | Username and password do not match    |
