@@ -29,7 +29,7 @@ No `.env` is required. Every setting defaults to the public demo targets describ
 
 | Command                   | Runs                                              |
 | ------------------------- | ------------------------------------------------- |
-| `npm test`                | Everything: 7 scenarios across 4 projects         |
+| `npm test`                | Everything: 8 scenarios plus the auth setup       |
 | `npm run test:smoke`      | The 3 `@smoke` scenarios (~5s)                    |
 | `npm run test:regression` | The full `@regression` set                        |
 | `npm run test:ui`         | `setup` + `auth` + `ui` projects                  |
@@ -147,7 +147,16 @@ reproducing it locally.
 ### Selectors
 
 `data-test` attributes throughout. They survive UI refactors and act as an explicit contract with
-developers about which hooks are safe to rely on.
+developers about which hooks are safe to rely on. The config points Playwright's `testIdAttribute`
+at `data-test`, so page objects read `getByTestId('username')` rather than repeating an attribute
+selector, and switching the convention later is a one-line change.
+
+### Gherkin that stays readable
+
+A scenario per input does not scale. Where several cases share one shape, the feature file uses a
+`Scenario Outline` with an `Examples` table, so adding a rejected sign-in case is a row rather than
+another near-identical scenario. Where a step repeats with different values, it takes a data table.
+Both keep the feature file about behaviour instead of about repetition.
 
 ### Linting
 
@@ -168,6 +177,7 @@ win over the file.
 | `API_BASE_URL`                      | `https://restful-booker.herokuapp.com` | API target                                 |
 | `STANDARD_USER` / `USER_PASSWORD`   | `standard_user` / `secret_sauce`       | UI account for storage state               |
 | `API_USER` / `API_PASSWORD`         | `admin` / `password123`                | API account for the token call             |
+| `BROWSER`                           | `chromium`                             | `chromium`, `firefox` or `webkit`          |
 | `HEADLESS`                          | `true`                                 | Set to `false` to watch a run locally      |
 | `WORKERS`                           | auto locally, `2` in CI                | Parallelism                                |
 | `RETRIES`                           | `0` locally, `2` in CI                 | Retries per test                           |
