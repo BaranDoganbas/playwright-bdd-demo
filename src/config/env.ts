@@ -63,6 +63,18 @@ function bool(variable: string, fallback: boolean): boolean {
   return fallback;
 }
 
+/** Reads a variable constrained to a fixed set of values, naming the alternatives on failure. */
+function oneOf<T extends string>(variable: string, fallback: T, allowed: readonly T[]): T {
+  const raw = process.env[variable]?.trim().toLowerCase();
+  if (raw === undefined || raw === '') return fallback;
+  const match = allowed.find((value) => value === raw);
+  if (match === undefined) {
+    fail(variable, `must be one of ${allowed.join(', ')} (got "${raw}")`);
+    return fallback;
+  }
+  return match;
+}
+
 function int(variable: string, fallback: number, min = 1): number {
   const raw = process.env[variable]?.trim();
   if (raw === undefined || raw === '') return fallback;
@@ -107,6 +119,12 @@ const parsed = {
 
   run: {
     headless: bool('HEADLESS', true),
+    /**
+     * Engine for the browser projects. Chromium is the default because it is the only
+     * one CI installs; the other two are for reproducing an engine-specific bug
+     * locally after `npx playwright install firefox webkit`.
+     */
+    browser: oneOf('BROWSER', 'chromium', ['chromium', 'firefox', 'webkit'] as const),
     /** `undefined` lets Playwright pick a worker count from the local CPU count. */
     workers: process.env.WORKERS ? int('WORKERS', 1) : isCI ? 2 : undefined,
     retries: int('RETRIES', isCI ? 2 : 0, 0),
