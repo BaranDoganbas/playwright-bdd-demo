@@ -5,8 +5,8 @@ export class CartPage {
   readonly checkoutButton: Locator;
 
   constructor(private readonly page: Page) {
-    this.items = page.locator('[data-test="inventory-item"]');
-    this.checkoutButton = page.locator('[data-test="checkout"]');
+    this.items = page.getByTestId('inventory-item');
+    this.checkoutButton = page.getByTestId('checkout');
   }
 
   async expectItem(productName: string): Promise<void> {

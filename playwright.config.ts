@@ -12,6 +12,13 @@ const uiSteps = ['src/steps/ui/**/*.ts', 'src/fixtures/fixtures.ts'];
 const apiSteps = ['src/steps/api/**/*.ts', 'src/fixtures/fixtures.ts'];
 const tags = env.run.tags;
 
+/** Selected by the BROWSER variable; every browser project shares one descriptor. */
+const browser = {
+  chromium: devices['Desktop Chrome'],
+  firefox: devices['Desktop Firefox'],
+  webkit: devices['Desktop Safari'],
+}[env.run.browser];
+
 export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 10_000 },
@@ -28,6 +35,12 @@ export default defineConfig({
     headless: env.run.headless,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    /**
+     * Makes `getByTestId('username')` resolve the `data-test` attribute the app
+     * actually ships, so page objects express intent instead of repeating an
+     * attribute selector. Changing the convention is then a one-line change here.
+     */
+    testIdAttribute: 'data-test',
   },
   projects: [
     // 1) Logs in once and persists storage state for the authenticated UI suite
@@ -35,7 +48,7 @@ export default defineConfig({
       name: 'setup',
       testDir: './src/setup',
       testMatch: /auth\.setup\.ts/,
-      use: { ...devices['Desktop Chrome'], baseURL: env.ui.baseURL },
+      use: { ...browser, baseURL: env.ui.baseURL },
     },
 
     // 2) Authentication flows: intentionally unauthenticated (login itself is under test)
@@ -47,7 +60,7 @@ export default defineConfig({
         tags,
       }),
       use: {
-        ...devices['Desktop Chrome'],
+        ...browser,
         baseURL: env.ui.baseURL,
       },
     },
@@ -62,7 +75,7 @@ export default defineConfig({
       }),
       dependencies: ['setup'],
       use: {
-        ...devices['Desktop Chrome'],
+        ...browser,
         baseURL: env.ui.baseURL,
         storageState: env.ui.storageState,
       },

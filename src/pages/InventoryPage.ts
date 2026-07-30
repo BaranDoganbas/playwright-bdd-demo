@@ -9,12 +9,12 @@ export class InventoryPage {
   readonly cartLink: Locator;
 
   constructor(private readonly page: Page) {
-    this.container = page.locator('[data-test="inventory-container"]');
-    this.items = page.locator('[data-test="inventory-item"]');
-    this.prices = page.locator('[data-test="inventory-item-price"]');
-    this.sortSelect = page.locator('[data-test="product-sort-container"]');
-    this.cartBadge = page.locator('[data-test="shopping-cart-badge"]');
-    this.cartLink = page.locator('[data-test="shopping-cart-link"]');
+    this.container = page.getByTestId('inventory-container');
+    this.items = page.getByTestId('inventory-item');
+    this.prices = page.getByTestId('inventory-item-price');
+    this.sortSelect = page.getByTestId('product-sort-container');
+    this.cartBadge = page.getByTestId('shopping-cart-badge');
+    this.cartLink = page.getByTestId('shopping-cart-link');
   }
 
   async goto(): Promise<void> {
@@ -25,9 +25,13 @@ export class InventoryPage {
     await expect(this.container).toBeVisible();
   }
 
+  /**
+   * SauceDemo derives the button's test id from the product name, so the slug is
+   * built the same way rather than mapping every product by hand.
+   */
   async addToCart(productName: string): Promise<void> {
     const slug = productName.toLowerCase().replace(/\s+/g, '-');
-    await this.page.locator(`[data-test="add-to-cart-${slug}"]`).click();
+    await this.page.getByTestId(`add-to-cart-${slug}`).click();
   }
 
   async sortBy(option: 'az' | 'za' | 'lohi' | 'hilo'): Promise<void> {
@@ -48,7 +52,8 @@ export class InventoryPage {
     await expect
       .poll(async () => {
         const prices = await this.itemPrices();
-        const ascending = prices.every((price, i) => i === 0 || prices[i - 1] <= price);
+        const sorted = [...prices].sort((a, b) => a - b);
+        const ascending = prices.join(',') === sorted.join(',');
         return ascending ? 'ascending' : `out of order: ${prices.join(', ')}`;
       })
       .toBe('ascending');
