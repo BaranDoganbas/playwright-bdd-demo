@@ -45,7 +45,7 @@ Feature: Shopping flow
     When I add "Sauce Labs Backpack" to the cart
     And I open the cart
     And I proceed to checkout
-    And I enter customer info "Baran" "Doganbas" "06000"
+    And I enter customer info "Baran" "Doğanbaş" "06000"
     Then the order total should equal the item total plus tax
 
   Scenario Outline: Checkout refuses to continue without a <missing>
@@ -57,16 +57,16 @@ Feature: Shopping flow
 
     Examples:
       | missing     | first | last     | postal | message                 |
-      | first name  |       | Doganbas | 06000  | First Name is required  |
+      | first name  |       | Doğanbaş | 06000  | First Name is required  |
       | last name   | Baran |          | 06000  | Last Name is required   |
-      | postal code | Baran | Doganbas |        | Postal Code is required |
+      | postal code | Baran | Doğanbaş |        | Postal Code is required |
 
   @smoke
   Scenario: Completing an order end to end
     When I add "Sauce Labs Backpack" to the cart
     And I open the cart
     And I proceed to checkout
-    And I enter customer info "Baran" "Doganbas" "06000"
+    And I enter customer info "Baran" "Doğanbaş" "06000"
     And I finish the order
     Then the order should be completed successfully
 
