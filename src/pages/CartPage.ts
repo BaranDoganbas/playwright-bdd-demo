@@ -1,4 +1,4 @@
-import { type Page, type Locator, expect } from '@playwright/test';
+import { type Page, type Locator } from '@playwright/test';
 
 export class CartPage {
   readonly items: Locator;
@@ -9,12 +9,8 @@ export class CartPage {
     this.checkoutButton = page.getByTestId('checkout');
   }
 
-  async expectItem(productName: string): Promise<void> {
-    await expect(this.items.filter({ hasText: productName })).toBeVisible();
-  }
-
-  async expectItemCount(count: number): Promise<void> {
-    await expect(this.items).toHaveCount(count);
+  item(productName: string): Locator {
+    return this.items.filter({ hasText: productName });
   }
 
   /** Remove buttons carry the same name-derived slug as the add buttons. */

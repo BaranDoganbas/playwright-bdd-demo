@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { createBdd, type DataTable } from 'playwright-bdd';
 import { test } from '../../fixtures/fixtures';
 import {
@@ -38,7 +39,7 @@ Then('I should see the inventory dashboard', async ({ inventoryPage }) => {
 });
 
 Then('I should see the login error {string}', async ({ loginPage }, message: string) => {
-  await loginPage.expectError(message);
+  await expect(loginPage.errorMessage).toContainText(message);
 });
 
 Then('I should be back on the login page', async ({ loginPage }) => {
@@ -63,10 +64,26 @@ When('I sort products by {string}', async ({ inventoryPage }, option: string) =>
 Then(
   'the product {string} should be in {string} order',
   async ({ inventoryPage }, field: string, direction: string) => {
-    await inventoryPage.expectSortedBy(
-      assertOneOf<SortField>(field, SORT_FIELDS, 'Sort field'),
-      assertOneOf<SortDirection>(direction, SORT_DIRECTIONS, 'Sort direction'),
-    );
+    const sortField = assertOneOf<SortField>(field, SORT_FIELDS, 'Sort field');
+    const sortDirection = assertOneOf<SortDirection>(direction, SORT_DIRECTIONS, 'Sort direction');
+    const ascending = sortDirection === 'ascending';
+
+    // The sort is client-side, so reading straight after selecting can catch the
+    // pre-sort DOM. Polling re-reads until it settles and prints the list it saw.
+    await expect
+      .poll(async () => {
+        if (sortField === 'price') {
+          const prices = await inventoryPage.itemPrices();
+          const sorted = [...prices].sort((a, b) => (ascending ? a - b : b - a));
+          return prices.join(',') === sorted.join(',') ? 'sorted' : `got ${prices.join(', ')}`;
+        }
+        const names = await inventoryPage.itemNames();
+        const sorted = [...names].sort((a, b) =>
+          ascending ? a.localeCompare(b) : b.localeCompare(a),
+        );
+        return names.join('|') === sorted.join('|') ? 'sorted' : `got ${names.join(', ')}`;
+      })
+      .toBe('sorted');
   },
 );
 
@@ -82,7 +99,7 @@ When('I open the product {string}', async ({ inventoryPage }, product: string) =
 });
 
 Then('the product page should show {string}', async ({ productPage }, product: string) => {
-  await productPage.expectShowing(product);
+  await expect(productPage.name).toHaveText(product);
 });
 
 Then('the product page should show the noted price', async ({ productPage, world }) => {
@@ -91,7 +108,7 @@ Then('the product page should show the noted price', async ({ productPage, world
     'notedPrice',
     'When I note the catalogue price of "..."',
   );
-  await productPage.expectPrice(price);
+  await expect.poll(() => productPage.currentPrice()).toBe(price);
 });
 
 // ---------- Cart ----------
@@ -114,7 +131,7 @@ When('I add the following products to the cart:', async ({ inventoryPage }, tabl
 });
 
 Then('the cart badge should show {int}', async ({ inventoryPage }, count: number) => {
-  await inventoryPage.expectCartCount(count);
+  await expect(inventoryPage.cartBadge).toHaveText(String(count));
 });
 
 When('I open the cart', async ({ inventoryPage }) => {
@@ -126,11 +143,11 @@ When('I remove {string} from the cart', async ({ cartPage }, productName: string
 });
 
 Then('the cart should contain {string}', async ({ cartPage }, productName: string) => {
-  await cartPage.expectItem(productName);
+  await expect(cartPage.item(productName)).toBeVisible();
 });
 
 Then('the cart should contain {int} item(s)', async ({ cartPage }, count: number) => {
-  await cartPage.expectItemCount(count);
+  await expect(cartPage.items).toHaveCount(count);
 });
 
 // ---------- Checkout ----------
@@ -147,11 +164,15 @@ When(
 );
 
 Then('I should see the checkout error {string}', async ({ checkoutPage }, message: string) => {
-  await checkoutPage.expectError(message);
+  await expect(checkoutPage.errorMessage).toContainText(message);
 });
 
 Then('the order total should equal the item total plus tax', async ({ checkoutPage }) => {
-  await checkoutPage.expectTotalAddsUp();
+  const { subtotal, tax, total } = await checkoutPage.summary();
+  // Whole cents, to keep floats out of it. Computed rather than compared against a
+  // hardcoded total, so a price change doesn't break the test but a broken sum does.
+  const cents = (amount: number): number => Math.round(amount * 100);
+  expect(cents(total), `item total ${subtotal} plus tax ${tax}`).toBe(cents(subtotal) + cents(tax));
 });
 
 When('I finish the order', async ({ checkoutPage }) => {
@@ -159,5 +180,5 @@ When('I finish the order', async ({ checkoutPage }) => {
 });
 
 Then('the order should be completed successfully', async ({ checkoutPage }) => {
-  await checkoutPage.expectOrderComplete();
+  await expect(checkoutPage.completeHeader).toHaveText('Thank you for your order!');
 });

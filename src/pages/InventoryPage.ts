@@ -70,31 +70,6 @@ export class InventoryPage {
     return texts.map((text) => text.trim());
   }
 
-  /**
-   * The sort is client-side, so reading straight after `sortBy` can catch the pre-sort
-   * DOM. `expect.poll` re-reads until it settles and prints the list it saw.
-   */
-  async expectSortedBy(field: SortField, direction: SortDirection): Promise<void> {
-    await expect
-      .poll(async () => {
-        if (field === 'price') {
-          const values = await this.itemPrices();
-          const sorted = [...values].sort((a, b) => (direction === 'ascending' ? a - b : b - a));
-          return values.join(',') === sorted.join(',') ? 'sorted' : `got ${values.join(', ')}`;
-        }
-        const values = await this.itemNames();
-        const sorted = [...values].sort((a, b) =>
-          direction === 'ascending' ? a.localeCompare(b) : b.localeCompare(a),
-        );
-        return values.join('|') === sorted.join('|') ? 'sorted' : `got ${values.join(', ')}`;
-      })
-      .toBe('sorted');
-  }
-
-  async expectCartCount(count: number): Promise<void> {
-    await expect(this.cartBadge).toHaveText(String(count));
-  }
-
   async openCart(): Promise<void> {
     await this.cartLink.click();
   }

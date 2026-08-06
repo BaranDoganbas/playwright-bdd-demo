@@ -1,4 +1,4 @@
-import { type Page, type Locator, expect } from '@playwright/test';
+import { type Page, type Locator } from '@playwright/test';
 import { parseMoney } from '../support/money';
 
 export class CheckoutPage {
@@ -37,27 +37,11 @@ export class CheckoutPage {
     await this.finishButton.click();
   }
 
-  async expectError(message: string): Promise<void> {
-    await expect(this.errorMessage).toContainText(message);
-  }
-
-  async expectOrderComplete(): Promise<void> {
-    await expect(this.completeHeader).toHaveText('Thank you for your order!');
-  }
-
-  /**
-   * Checks the summary arithmetic. Computed, not compared against a hardcoded total,
-   * so a price or tax change doesn't break the test while a broken sum still does.
-   * Whole cents, to keep floats out of it.
-   */
-  async expectTotalAddsUp(): Promise<void> {
-    const subtotal = parseMoney(await this.subtotalLabel.innerText());
-    const tax = parseMoney(await this.taxLabel.innerText());
-    const total = parseMoney(await this.totalLabel.innerText());
-
-    const cents = (amount: number): number => Math.round(amount * 100);
-    expect(cents(total), `item total ${subtotal} plus tax ${tax} should equal total ${total}`).toBe(
-      cents(subtotal) + cents(tax),
-    );
+  async summary(): Promise<{ subtotal: number; tax: number; total: number }> {
+    return {
+      subtotal: parseMoney(await this.subtotalLabel.innerText()),
+      tax: parseMoney(await this.taxLabel.innerText()),
+      total: parseMoney(await this.totalLabel.innerText()),
+    };
   }
 }

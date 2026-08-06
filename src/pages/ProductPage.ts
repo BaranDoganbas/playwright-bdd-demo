@@ -1,4 +1,4 @@
-import { type Page, type Locator, expect } from '@playwright/test';
+import { type Page, type Locator } from '@playwright/test';
 import { parseMoney } from '../support/money';
 
 /** Detail view for a single product, reached by opening a product from the catalogue. */
@@ -15,12 +15,8 @@ export class ProductPage {
     this.backButton = page.getByTestId('back-to-products');
   }
 
-  async expectShowing(productName: string): Promise<void> {
-    await expect(this.name).toHaveText(productName);
-  }
-
-  async expectPrice(amount: number): Promise<void> {
-    await expect.poll(async () => parseMoney(await this.price.innerText())).toBe(amount);
+  async currentPrice(): Promise<number> {
+    return parseMoney(await this.price.innerText());
   }
 
   async backToProducts(): Promise<void> {

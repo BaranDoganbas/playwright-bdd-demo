@@ -36,8 +36,4 @@ export class LoginPage {
   async expectLoaded(): Promise<void> {
     await expect(this.loginButton).toBeVisible();
   }
-
-  async expectError(message: string): Promise<void> {
-    await expect(this.errorMessage).toContainText(message);
-  }
 }
