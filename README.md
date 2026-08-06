@@ -1,15 +1,20 @@
-# Playwright BDD Demo Framework
+# Playwright BDD Demo
 
 [![E2E Tests](https://github.com/BaranDoganbas/playwright-bdd-demo/actions/workflows/e2e.yml/badge.svg)](https://github.com/BaranDoganbas/playwright-bdd-demo/actions/workflows/e2e.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](.nvmrc)
 
-An end-to-end test framework built with [Playwright](https://playwright.dev) and
-[playwright-bdd](https://github.com/vitalets/playwright-bdd). Same structure I use day to day on
-enterprise software, rebuilt against public demo targets because the real suite is private.
+An end-to-end suite built with [Playwright](https://playwright.dev) and
+[playwright-bdd](https://github.com/vitalets/playwright-bdd). The layout mirrors a suite I maintain
+in production: storage-state auth so sign-in runs once, project separation so the API suite never
+boots a browser, and page objects that stop at readiness.
 
-26 scenarios: a web shop ([SauceDemo](https://www.saucedemo.com)) and a REST API
+26 scenarios across a web shop ([SauceDemo](https://www.saucedemo.com)) and a REST API
 ([RESTful Booker](https://restful-booker.herokuapp.com)), run as four Playwright projects.
+
+Both targets are fixtures. They were chosen because they are public and stable, and neither is deep
+enough to be interesting on its own. What the suite does with them is the part worth reading: 11 of
+the 26 scenarios are negative paths, the checkout total is computed from the page rather than
+hardcoded, and the authorisation scenario checks the booking was actually left untouched instead of
+trusting the 403.
 
 **Live Cucumber report:** https://barandoganbas.github.io/playwright-bdd-demo/
 
@@ -35,105 +40,100 @@ No `.env` needed. Everything defaults to the public demo targets, so a fresh clo
 | Booking API | CRUD lifecycle, PUT replacement, search by guest name, health check             |
 | API auth    | A write without a token is refused and leaves the booking untouched             |
 
-Roughly half of these are negative paths: rejected sign-ins, refused writes, missing form fields,
-unknown ids.
-
 ## Running a subset
 
 ```bash
-npm run test:smoke        # 3 @smoke scenarios, ~5s
-npm run test:api          # api project only
-npm run test:ui           # auth + ui projects
-npm run report            # open the last Playwright report
+npm run test:smoke   # 3 @smoke scenarios, ~5s
+npm run test:api     # api project only
+npm run test:ui      # auth + ui projects
+npm run report       # open the last Playwright report
 
-npx playwright test --grep @api        # by tag
-npx playwright test --project=auth     # by project
+npx playwright test --project=api   # by project
+TAGS='@ui and not @slow' npm test   # tag expression, applied at generation time
 ```
 
-The same three checks CI runs: `npm run lint`, `npm run format:check`, `npm run typecheck`.
+`@ui`, `@auth` and `@api` mark the area and sit on the feature. `@smoke` sits on three individual
+scenarios: sign in, complete an order, run the booking lifecycle. A scenario earns `@smoke` if its
+failure would make the rest of the run not worth reading, which is why there are three of them and
+why the list has not grown. There is no `@regression` tag, because a
+tag applied to every feature selects everything and tells you nothing; the regression run is
+`npm test`.
 
 ## Layout
 
 ```
-├── features/            # Gherkin, split by project: auth / ui / api
-└── src/
-    ├── pages/           # Page Objects
-    ├── steps/           # step definitions (ui / api)
-    ├── api/             # BookerClient: timeouts, auth, typed responses
-    ├── config/          # env.ts, the only reader of process.env
-    ├── data/            # test-data builders
-    ├── fixtures/        # page objects, API client and scenario world, injected
-    ├── setup/           # auth.setup.ts, persists storage state
-    └── support/         # small shared helpers
+features/      Gherkin, one directory per Playwright project
+src/pages/     page objects
+src/steps/     step definitions, scoped per project
+src/api/       BookerClient
+src/config/    env.ts
+src/data/      test-data builders
+src/fixtures/  page objects and the scenario world, injected into steps
+src/setup/     auth.setup.ts
+src/support/   parseMoney, world preconditions
 ```
 
-`bddgen` turns the feature files into specs, the step definitions get their page objects and the
-API client from fixtures, and the run produces a Cucumber HTML report plus the Playwright report.
-Elements are addressed with `getByTestId()`; `testIdAttribute` is set to `data-test` in the config,
-so the convention lives in one line.
+`bddgen` turns the feature files into specs, steps get their page objects and the API client from
+fixtures, and the run produces a Cucumber HTML report alongside the Playwright one. `testIdAttribute`
+is set to `data-test` in the config, so `getByTestId()` resolves the attribute SauceDemo already
+ships.
 
 ## Design notes
 
-**Login runs once.** The `setup` project signs in and persists storage state; the `ui` scenarios
-reuse it. Login itself is tested in the `auth` project, which deliberately runs unauthenticated.
-That keeps login out of the flakiness budget for every other scenario.
+**Authorisation is checked at the layer that enforces it.** A hidden button proves nothing about
+whether the backend refused the write. The API scenario sends an update with no token, asserts the
+403, and then re-reads the booking to confirm the price is unchanged. A status code on its own only
+proves the API said no, not that it meant it.
 
-**One project per browser context.** Authenticated and unauthenticated flows can't share state, so
-they are separate Playwright projects with a `dependencies` chain. CI can run `--project=api` on
-its own.
+**Anything that retries must not assert.** `BookerClient` owns the timeouts and the single retry,
+which applies to the auth token and nothing else. There is no `expect` anywhere in it. That is what
+makes the retry safe: it cannot mask a failing assertion, only a cold sandbox.
 
-**Only `src/config/env.ts` reads `process.env`.** It parses and validates every setting on load,
-and a bad value aborts the run before the first test with all the problems listed, so nothing runs
-against a half-configured environment.
+**Only `src/config/env.ts` reads `process.env`.** It validates everything on load, so a bad value
+aborts before the first test with all the problems listed at once.
 
-**The API client never asserts.** `BookerClient` owns the timeouts and the single retry, on the
-auth token only. Keeping assertions out of it means no retry can mask a failing expectation.
+**Page objects stop at readiness.** They expose locators and parsed values and own `expectLoaded()`;
+every business assertion lives in the step definition, next to the scenario it belongs to. Reading a
+step tells you what is being checked without opening a second file.
 
-RESTful Booker is a shared public sandbox that keeps whatever anyone writes to it, so the test data
-is generated: [`aBooking()`](src/data/booking.ts) randomises the surname and computes dates
-relative to today. Parallel workers and other people's leftovers can't collide with a run.
+**Locators start from role and accessible name.** A test id is what I ask a developer for when the
+role query cannot disambiguate, which is why this repo uses SauceDemo's `data-test` attributes where
+they exist and falls back to the accessible name for the menu button, which ships none.
 
-## Tags
+**Login runs once.** The `setup` project signs in and persists storage state, and the `ui` scenarios
+reuse it. Login itself is covered by the `auth` project, which runs unauthenticated on purpose. That
+keeps sign-in out of the flakiness budget for every other scenario.
 
-`@ui`, `@auth`, `@api` mark the area and sit on the feature. `@regression` also sits on the
-feature, so it always means the full suite. `@smoke` sits on individual scenarios and is a strict
-subset: sign in, complete an order, run the booking lifecycle. If smoke grows past about five
-scenarios it has stopped being smoke.
+## Known limitations
 
-`--grep @smoke` filters at run time. `TAGS='@ui and not @slow'` filters at generation time, so the
-unwanted specs are never produced.
+RESTful Booker is a shared public sandbox. Other people's bookings are in it, which is why
+[`aBooking()`](src/data/booking.ts) randomises the surname and computes dates relative to today. It
+also cold-starts, which is why the token call is the one retried request. It goes down sometimes, and
+when the API project is red that is worth checking before anything else.
+
+CI installs chromium only. There is no cross-browser matrix and no visual regression; `BROWSER`
+exists so an engine-specific bug can be reproduced locally.
+
+The sort check polls, because the sort is client-side and there is no signal to wait on. It is the
+weakest assertion here.
+
+The four checkout scenarios each repeat the same four steps: add, open cart, proceed, enter details.
+A composite step would collapse that to one line, and I left it alone. Someone outside the team
+reading the scenario should be able to follow what the customer did without being told that
+"I check out with valid details" happens to mean four things. The duplication costs three lines a
+scenario and buys a feature file that still explains itself, which is most of why the Gherkin is
+here at all.
 
 ## Configuration
 
-[`.env.example`](.env.example) documents every variable. `.env` is gitignored, and real environment
-variables win over the file.
-
-| Variable                            | Default                             | Purpose                            |
-| ----------------------------------- | ----------------------------------- | ---------------------------------- |
-| `BASE_URL` / `API_BASE_URL`         | SauceDemo / RESTful Booker          | Targets                            |
-| `STANDARD_USER` / `USER_PASSWORD`   | `standard_user` / `secret_sauce`    | UI account                         |
-| `API_USER` / `API_PASSWORD`         | `admin` / `password123`             | API account for the token call     |
-| `BROWSER`                           | `chromium`                          | `chromium`, `firefox` or `webkit`  |
-| `HEADLESS`                          | `true`                              | `false` to watch a run             |
-| `WORKERS` / `RETRIES`               | auto / `0` locally, `2` / `2` in CI | Parallelism and retries            |
-| `TAGS`                              | _unset_                             | Tag expression, at generation time |
-| `API_TIMEOUT` / `API_TOKEN_RETRIES` | `30000` / `3`                       | API resilience                     |
-| `STORAGE_STATE`                     | `.auth/user.json`                   | Where the session is persisted     |
-
-Both targets are public demo systems whose credentials are published on the sites themselves, which
-is why they can be defaulted. Dropping a default makes a variable hard-required.
+[`.env.example`](.env.example) documents every variable and its default. `.env` is gitignored, and
+real environment variables win over the file. Both targets publish their own credentials on their
+sites, which is why they can be defaulted at all; dropping a default makes a variable hard-required.
 
 ## CI
 
-`.github/workflows/e2e.yml` runs on push, PR, a weekly schedule and manual dispatch. A `quality`
-job (lint, format, types) runs alongside the suite, browser binaries are cached on the resolved
-Playwright version, and the Cucumber report is published to Pages from `main`, including when tests
-fail. Retries only apply in CI, so a flaky test fails locally.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
-
-Built by Baran Doğanbaş, QA Automation Engineer. Portfolio: https://barandoganbas.netlify.app
+`.github/workflows/e2e.yml` runs on pull requests, pushes to `main`, a weekly schedule and manual
+dispatch. Lint, format and type checks run as a separate job in parallel with the suite. Browser
+binaries are cached against the resolved Playwright version. On pushes to `main` the Cucumber report
+is published to Pages, including when tests fail, since a red report is the one worth reading.
+Retries apply only in CI, so a flaky test fails locally.
