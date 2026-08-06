@@ -14,19 +14,12 @@ export class LoginPage {
     this.errorMessage = page.getByTestId('error');
   }
 
-  /**
-   * `path` exists so a scenario can request a protected page directly and assert that
-   * the app bounces it back here, which is the only way to test that from the
-   * unauthenticated project.
-   */
+  /** Takes a path so a scenario can request a protected page and watch the app bounce it back here. */
   async goto(path = '/'): Promise<void> {
     await this.page.goto(path);
   }
 
-  /**
-   * Password defaults to the shared demo password: SauceDemo accepts it for every
-   * account, so scenarios only name the user unless the password itself is the subject.
-   */
+  /** SauceDemo accepts one password for every account, so only the user is usually worth naming. */
   async signInAs(user: string, password: string = env.users.standard.password): Promise<void> {
     await this.username.fill(user);
     await this.password.fill(password);

@@ -13,7 +13,7 @@ export class CheckoutPage {
   readonly taxLabel: Locator;
   readonly totalLabel: Locator;
 
-  constructor(private readonly page: Page) {
+  constructor(page: Page) {
     this.firstName = page.getByTestId('firstName');
     this.lastName = page.getByTestId('lastName');
     this.postalCode = page.getByTestId('postalCode');

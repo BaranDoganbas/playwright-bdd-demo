@@ -13,8 +13,6 @@ Given('I have an auth token', async ({ booker, world }) => {
 });
 
 When('I create a booking', async ({ booker, world }) => {
-  // Built fresh per scenario: the sandbox persists writes, so a fixed payload
-  // would collide with parallel workers and with other users of the public API.
   const booking = aBooking();
 
   const response = await booker.createBooking(booking);
@@ -35,8 +33,7 @@ Then('I can fetch the booking and it matches what I sent', async ({ booker, worl
   expect(response.status()).toBe(200);
 
   const body = (await response.json()) as Booking;
-  // Whole object, not field by field: a silently dropped field is a real defect and
-  // this catches it without listing every key.
+  // Whole object rather than field by field, so a silently dropped field is caught too.
   expect(body).toMatchObject(sent);
 });
 
@@ -75,18 +72,15 @@ Then('the booking should no longer exist', async ({ booker, world }) => {
   expect(response.status()).toBe(404);
 });
 
-// ---------- Health ----------
-
 When('I call the health endpoint', async ({ booker, world }) => {
   world.lastResponse = await booker.ping();
 });
 
 Then('the service should report itself up', async ({ world }) => {
   const response = fromWorld(world.lastResponse, 'lastResponse', 'When I call the health endpoint');
+  // /ping answers 201, not 200.
   expect(response.status(), await responseDetail(response)).toBe(201);
 });
-
-// ---------- Search ----------
 
 Then("the booking should be listed under the guest's name", async ({ booker, world }) => {
   const sent = fromWorld(world.booking, 'booking', 'When I create a booking');
@@ -102,8 +96,6 @@ Then("the booking should be listed under the guest's name", async ({ booker, wor
   ).toContain(id);
 });
 
-// ---------- Full replacement ----------
-
 When('I replace the booking with a new payload', async ({ booker, world }) => {
   const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
   const token = fromWorld(world.token, 'token', 'Given I have an auth token');
@@ -118,11 +110,9 @@ When('I replace the booking with a new payload', async ({ booker, world }) => {
   const response = await booker.replaceBooking(id, token, replacement);
   expect(response.status(), await responseDetail(response)).toBe(200);
 
-  // Later steps assert against what was last sent, so the world moves on with it.
+  // Later steps assert against what was last sent.
   world.booking = replacement;
 });
-
-// ---------- Authorisation ----------
 
 When('I try to update the booking without a token', async ({ booker, world }) => {
   const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
@@ -137,8 +127,6 @@ Then('the request should be refused as forbidden', async ({ world }) => {
   );
   expect(response.status(), await responseDetail(response)).toBe(403);
 });
-
-// ---------- Missing resources ----------
 
 When('I fetch the booking with id {int}', async ({ booker, world }, id: number) => {
   world.lastResponse = await booker.getBooking(id);

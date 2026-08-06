@@ -36,7 +36,6 @@ export class InventoryPage {
     await expect(this.container).toBeVisible();
   }
 
-  /** The card for one product, used to read values that belong to that product only. */
   private card(productName: string): Locator {
     return this.items.filter({ hasText: productName });
   }

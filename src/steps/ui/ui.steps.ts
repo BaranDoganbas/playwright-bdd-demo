@@ -20,8 +20,6 @@ const PROTECTED_PAGES: Record<string, string> = {
   'the checkout form': '/checkout-step-one.html',
 };
 
-// ---------- Authentication ----------
-
 Given('I am on the login page', async ({ loginPage }) => {
   await loginPage.goto();
 });
@@ -76,8 +74,6 @@ Then('I should be back on the login page', async ({ loginPage }) => {
 When('I log out', async ({ appMenu }) => {
   await appMenu.logout();
 });
-
-// ---------- Catalogue ----------
 
 Given('I am on the inventory page', async ({ inventoryPage }) => {
   await inventoryPage.goto();
@@ -138,15 +134,12 @@ Then('the product page should show the noted price', async ({ productPage, world
   await expect.poll(() => productPage.currentPrice()).toBe(price);
 });
 
-// ---------- Cart ----------
-
 When('I add {string} to the cart', async ({ inventoryPage }, productName: string) => {
   await inventoryPage.addToCart(productName);
 });
 
-// Table form for the multi-product case, so adding a product is one more row.
-// The column check makes a mistyped header fail loudly; without it the step would
-// happily add nothing.
+// Table form for the multi-product case, so adding a product is one more row. The
+// column check makes a mistyped header fail loudly instead of adding nothing.
 When('I add the following products to the cart:', async ({ inventoryPage }, table: DataTable) => {
   for (const row of table.hashes()) {
     const product = row.product;
@@ -176,8 +169,6 @@ Then('the cart should contain {string}', async ({ cartPage }, productName: strin
 Then('the cart should contain {int} item(s)', async ({ cartPage }, count: number) => {
   await expect(cartPage.items).toHaveCount(count);
 });
-
-// ---------- Checkout ----------
 
 When('I proceed to checkout', async ({ cartPage }) => {
   await cartPage.checkout();

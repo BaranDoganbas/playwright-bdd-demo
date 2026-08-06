@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
 export type BookingDates = {
-  /** ISO date, YYYY-MM-DD. */
   checkin: string;
   checkout: string;
 };
@@ -15,7 +14,6 @@ export type Booking = {
   additionalneeds?: string;
 };
 
-/** Days from today, formatted as the YYYY-MM-DD the API expects. */
 function isoDaysFromNow(days: number): string {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() + days);
@@ -23,13 +21,9 @@ function isoDaysFromNow(days: number): string {
 }
 
 /**
- * Builds a valid booking, with every field overridable.
- *
- * RESTful Booker is a shared public sandbox that persists what anyone writes to it
- * and exposes filtered search by name. Fixed literals would collide with other
- * people's data and with parallel workers in this suite, so the surname carries a
- * random suffix and stay dates are always relative to today. The payload cannot go
- * stale or clash, and a failure stays traceable to one run.
+ * Builds a valid booking, with every field overridable. The surname carries a random
+ * suffix and the dates are relative to today because RESTful Booker is a shared public
+ * sandbox: fixed values would collide with parallel workers and with other people's data.
  */
 export function aBooking(overrides: Partial<Booking> = {}): Booking {
   return {

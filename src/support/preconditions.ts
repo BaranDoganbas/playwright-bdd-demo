@@ -1,8 +1,7 @@
 /**
- * Reads a value an earlier step should have written to the scenario `world`.
- *
- * A `!` here would turn a mis-ordered scenario into "cannot read property of
- * undefined" deep inside a request. This names the value and the step that sets it.
+ * Reads a value an earlier step should have written to the scenario `world`. A `!`
+ * here would turn a mis-ordered scenario into "cannot read property of undefined"
+ * deep inside a request; this names the value and the step that sets it.
  */
 export function fromWorld<T>(value: T | undefined, name: string, setBy: string): T {
   if (value === undefined || value === null) {
@@ -15,11 +14,9 @@ export function fromWorld<T>(value: T | undefined, name: string, setBy: string):
 }
 
 /**
- * Narrows a value that came from a feature file to the set the code accepts.
- *
- * Gherkin hands over every parameter as a string, so a typo in an Examples table
- * reaches a page object as an unusable value and dies as a timeout. This fails on the
- * spot and names the alternatives.
+ * Narrows a value that came from a feature file. Gherkin hands over every parameter as
+ * a string, so a typo in an Examples table would otherwise reach a page object as an
+ * unusable value and die as a timeout.
  */
 export function assertOneOf<T extends string>(
   value: string,

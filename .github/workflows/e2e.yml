@@ -5,24 +5,19 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    - cron: '0 6 * * 1' # weekly Monday run keeps the published report fresh
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
-# Default for every job. Pages deployment needs more, and asks for it on its own job
-# rather than handing a write-capable token to the jobs that run test code.
+# Pages deployment asks for more on its own job rather than handing a write-capable
+# token to the jobs that run test code.
 permissions:
   contents: read
 
-# Supersede in-flight runs of the same branch or PR. The Pages deployment has its own
-# group below, because concurrent deployments to one environment are what must not
-# overlap, and cancelling a half-finished deploy is worse than queueing it.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Static checks run in parallel with the browser suite. They finish in well under a
-  # minute, and a lint or type error should be visible without waiting for E2E.
   quality:
     name: Lint & typecheck
     runs-on: ubuntu-latest
@@ -60,8 +55,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Browser binaries are ~150MB and unchanged between runs; keying on the
-      # resolved Playwright version invalidates the cache exactly when it should.
+      # Keying on the resolved Playwright version invalidates the ~150MB browser
+      # cache exactly when it should.
       - name: Resolve Playwright version
         id: pw
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
@@ -85,7 +80,7 @@ jobs:
       - name: Run BDD tests
         run: npm test
 
-      - name: Upload Playwright report (debug artifact)
+      - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v7
         with:

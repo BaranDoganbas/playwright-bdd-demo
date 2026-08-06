@@ -3,14 +3,13 @@ import { defineBddProject, cucumberReporter } from 'playwright-bdd';
 import { env } from './src/config/env';
 
 /**
- * Step scope is per-project on purpose. If the UI project could resolve an API step,
- * a genuinely missing step definition would hide behind the accidental match.
+ * Step scope is per-project on purpose. If the UI project could resolve an API step, a
+ * genuinely missing step definition would hide behind the accidental match.
  */
 const uiSteps = ['src/steps/ui/**/*.ts', 'src/fixtures/fixtures.ts'];
 const apiSteps = ['src/steps/api/**/*.ts', 'src/fixtures/fixtures.ts'];
 const tags = env.run.tags;
 
-/** Selected by the BROWSER variable; every browser project shares one descriptor. */
 const browser = {
   chromium: devices['Desktop Chrome'],
   firefox: devices['Desktop Firefox'],
@@ -33,11 +32,9 @@ export default defineConfig({
     headless: env.run.headless,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    /** Points `getByTestId()` at the attribute the app ships. */
     testIdAttribute: 'data-test',
   },
   projects: [
-    // 1) Logs in once and persists storage state for the authenticated UI suite
     {
       name: 'setup',
       testDir: './src/setup',
@@ -45,7 +42,7 @@ export default defineConfig({
       use: { ...browser, baseURL: env.ui.baseURL },
     },
 
-    // 2) Authentication flows: intentionally unauthenticated (login itself is under test)
+    // Deliberately unauthenticated: login itself is what these scenarios test.
     {
       ...defineBddProject({
         name: 'auth',
@@ -59,7 +56,6 @@ export default defineConfig({
       },
     },
 
-    // 3) Authenticated UI suite: reuses storage state, never re-runs login
     {
       ...defineBddProject({
         name: 'ui',
@@ -75,7 +71,6 @@ export default defineConfig({
       },
     },
 
-    // 4) API suite: RESTful Booker (auth token + CRUD)
     {
       ...defineBddProject({
         name: 'api',

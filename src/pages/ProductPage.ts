@@ -1,7 +1,6 @@
 import { type Page, type Locator } from '@playwright/test';
 import { parseMoney } from '../support/money';
 
-/** Detail view for a single product, reached by opening a product from the catalogue. */
 export class ProductPage {
   readonly name: Locator;
   readonly price: Locator;

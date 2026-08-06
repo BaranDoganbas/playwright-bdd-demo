@@ -2,9 +2,8 @@ import { config as loadDotenv } from 'dotenv';
 
 /**
  * Every environment-dependent value in the suite. Nothing outside this module reads
- * `process.env`, which keeps credentials and URLs out of the test code.
- *
- * Real environment variables win over `.env`, so CI secrets override a local file.
+ * `process.env`. Real environment variables win over `.env`, so CI secrets override a
+ * local file.
  */
 loadDotenv({ quiet: true });
 
@@ -16,12 +15,8 @@ function fail(variable: string, reason: string): void {
 }
 
 /**
- * Reads a required string variable.
- *
- * `fallback` is only supplied for the public demo systems, whose credentials are
- * published on the sites themselves. That is what lets `npm test` work on a fresh
- * clone. Omitting `fallback` makes the variable hard-required, which is what you want
- * when pointing this at a real environment.
+ * A `fallback` is only supplied for the public demo systems, whose credentials are
+ * published on the sites themselves. Omitting it makes the variable hard-required.
  */
 function str(variable: string, fallback?: string): string {
   const raw = process.env[variable]?.trim();
@@ -40,7 +35,6 @@ function str(variable: string, fallback?: string): string {
 function url(variable: string, fallback: string): string {
   const value = str(variable, fallback);
   try {
-    // Catch typos like "saucedemo.com" here, not at the first navigation.
     new URL(value);
   } catch {
     fail(variable, `must be an absolute URL (got "${value}")`);
@@ -57,7 +51,6 @@ function bool(variable: string, fallback: boolean): boolean {
   return fallback;
 }
 
-/** Reads a variable constrained to a fixed set of values, naming the alternatives on failure. */
 function oneOf<T extends string>(variable: string, fallback: T, allowed: readonly T[]): T {
   const raw = process.env[variable]?.trim().toLowerCase();
   if (raw === undefined || raw === '') return fallback;
@@ -87,15 +80,13 @@ const parsed = {
 
   ui: {
     baseURL: url('BASE_URL', 'https://www.saucedemo.com'),
-    /** Where the setup project persists the signed-in session for the `ui` suite. */
     storageState: str('STORAGE_STATE', '.auth/user.json'),
   },
 
   api: {
     baseURL: url('API_BASE_URL', 'https://restful-booker.herokuapp.com'),
-    /** Per-request ceiling. The public sandbox cold-starts and can stall for seconds. */
+    /** The public sandbox cold-starts and can stall for seconds. */
     timeout: int('API_TIMEOUT', 30_000),
-    /** Attempts for the token call only; assertions are never retried. */
     tokenRetries: int('API_TOKEN_RETRIES', 3),
     credentials: {
       username: str('API_USER', 'admin'),
@@ -104,7 +95,6 @@ const parsed = {
   },
 
   users: {
-    /** The account the setup project signs in as to seed storage state. */
     standard: {
       username: str('STANDARD_USER', 'standard_user'),
       password: str('USER_PASSWORD', 'secret_sauce'),
@@ -113,16 +103,11 @@ const parsed = {
 
   run: {
     headless: bool('HEADLESS', true),
-    /**
-     * Engine for the browser projects. Chromium is the default because it is the only
-     * one CI installs; the other two are for reproducing an engine-specific bug
-     * locally after `npx playwright install firefox webkit`.
-     */
+    /** Chromium is the default because it is the only engine CI installs. */
     browser: oneOf('BROWSER', 'chromium', ['chromium', 'firefox', 'webkit'] as const),
     /** `undefined` lets Playwright pick a worker count from the local CPU count. */
     workers: process.env.WORKERS ? int('WORKERS', 1) : isCI ? 2 : undefined,
     retries: int('RETRIES', isCI ? 2 : 0, 0),
-    /** Cucumber tag expression, e.g. "@smoke" or "@ui and not @slow". */
     tags: process.env.TAGS?.trim() || undefined,
   },
 } as const;

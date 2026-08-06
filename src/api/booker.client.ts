@@ -7,25 +7,13 @@ export type CreateBookingResponse = {
   booking: Booking;
 };
 
-/**
- * Typed wrapper over Playwright's `request` fixture. Keeps transport policy
- * (timeouts, the token retry) and response typing out of the step definitions.
- *
- * Nothing in here asserts. That is what makes the retry below safe.
- */
+/** Typed wrapper over Playwright's `request`. Nothing here asserts, which is what makes the retry safe. */
 export class BookerClient {
   constructor(private readonly request: APIRequestContext) {}
 
-  /** RESTful Booker cold-starts on a free dyno, so every call gets an explicit ceiling. */
-  private get timeout(): number {
-    return env.api.timeout;
-  }
-
   /**
-   * Gets an auth token, retrying on transport errors and non-200 responses.
-   *
-   * The only retried request in the suite. It is a precondition, not a subject under
-   * test, and it is where a sandbox cold start turns a healthy run red.
+   * The only retried request in the suite. It is a precondition rather than a subject
+   * under test, and it is where a sandbox cold start turns a healthy run red.
    */
   async requestToken(): Promise<string> {
     const attempts = env.api.tokenRetries;
@@ -35,7 +23,7 @@ export class BookerClient {
       try {
         const response = await this.request.post('/auth', {
           data: env.api.credentials,
-          timeout: this.timeout,
+          timeout: env.api.timeout,
         });
 
         if (response.ok()) {
@@ -61,58 +49,54 @@ export class BookerClient {
     );
   }
 
-  /** Health endpoint. Answers 201, not 200, which is why the scenario pins it. */
   ping(): Promise<APIResponse> {
-    return this.request.get('/ping', { timeout: this.timeout });
+    return this.request.get('/ping', { timeout: env.api.timeout });
   }
 
   createBooking(booking: Booking): Promise<APIResponse> {
-    return this.request.post('/booking', { data: booking, timeout: this.timeout });
+    return this.request.post('/booking', { data: booking, timeout: env.api.timeout });
   }
 
-  /** Filtered search. The builder randomizes the surname, so this matches one run's data. */
   findBookings(firstname: string, lastname: string): Promise<APIResponse> {
     return this.request.get('/booking', {
       params: { firstname, lastname },
-      timeout: this.timeout,
+      timeout: env.api.timeout,
     });
   }
 
-  /** Full replacement. Unlike PATCH, a partial payload here is rejected by the API. */
+  /** Unlike PATCH, a partial payload here is rejected by the API. */
   replaceBooking(id: number, token: string, booking: Booking): Promise<APIResponse> {
     return this.request.put(`/booking/${id}`, {
       headers: this.authHeaders(token),
       data: booking,
-      timeout: this.timeout,
+      timeout: env.api.timeout,
     });
   }
 
   /**
-   * Unauthenticated write, so a scenario can check the endpoint refuses it.
-   *
-   * Its own method, not an optional token argument: with an optional argument an
+   * Its own method rather than an optional token argument: with an optional argument an
    * undefined token would silently turn an authorised test into this one.
    */
   updateBookingUnauthenticated(id: number, patch: Partial<Booking>): Promise<APIResponse> {
-    return this.request.patch(`/booking/${id}`, { data: patch, timeout: this.timeout });
+    return this.request.patch(`/booking/${id}`, { data: patch, timeout: env.api.timeout });
   }
 
   getBooking(id: number): Promise<APIResponse> {
-    return this.request.get(`/booking/${id}`, { timeout: this.timeout });
+    return this.request.get(`/booking/${id}`, { timeout: env.api.timeout });
   }
 
   updateBooking(id: number, token: string, patch: Partial<Booking>): Promise<APIResponse> {
     return this.request.patch(`/booking/${id}`, {
       headers: this.authHeaders(token),
       data: patch,
-      timeout: this.timeout,
+      timeout: env.api.timeout,
     });
   }
 
   deleteBooking(id: number, token: string): Promise<APIResponse> {
     return this.request.delete(`/booking/${id}`, {
       headers: this.authHeaders(token),
-      timeout: this.timeout,
+      timeout: env.api.timeout,
     });
   }
 

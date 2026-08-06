@@ -1,13 +1,12 @@
 import { type Page, type Locator } from '@playwright/test';
 
 /**
- * The burger menu in the header, which is shared by every authenticated page rather
- * than belonging to one of them.
+ * The burger menu in the header, shared by every authenticated page rather than
+ * belonging to one of them.
  *
- * The button itself ships no `data-test` attribute, so it is addressed by its
- * accessible name. That is the next best thing after a test id: it breaks only if the
- * control stops being a button or stops being labelled, both of which are worth
- * failing on.
+ * The button ships no `data-test` attribute, so it is addressed by its accessible
+ * name. That breaks only if the control stops being a button or stops being
+ * labelled, both of which are worth failing on.
  */
 export class AppMenu {
   readonly openButton: Locator;

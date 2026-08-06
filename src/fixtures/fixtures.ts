@@ -10,21 +10,16 @@ import type { Booking } from '../data/booking';
 import type { APIResponse } from '@playwright/test';
 
 /**
- * Scratchpad for passing values between steps within one scenario.
- *
- * Typed, so steps read these fields without casting and a mistyped field name is a
- * compile error, not an `undefined` that surfaces three steps later.
+ * Values passed between steps within one scenario. Typed, so a mistyped field is a
+ * compile error rather than an `undefined` that surfaces three steps later.
  */
 export type World = {
   token?: string;
   bookingId?: number;
-  /** The payload that was sent, so later steps can assert round-tripped values. */
   booking?: Booking;
-  /** The last response a step deliberately did not assert on, for the next step to check. */
+  /** A response a step deliberately did not assert on, for the next step to check. */
   lastResponse?: APIResponse;
-  /** A catalogue price noted before navigating, to compare against the product page. */
   notedPrice?: number;
-  /** The protected path a signed-out scenario asked for, echoed back in the app's warning. */
   requestedPath?: string;
 };
 
