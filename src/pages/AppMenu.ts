@@ -12,20 +12,14 @@ import { type Page, type Locator } from '@playwright/test';
 export class AppMenu {
   readonly openButton: Locator;
   readonly logoutLink: Locator;
-  readonly resetLink: Locator;
 
-  constructor(private readonly page: Page) {
+  constructor(page: Page) {
     this.openButton = page.getByRole('button', { name: 'Open Menu' });
     this.logoutLink = page.getByTestId('logout-sidebar-link');
-    this.resetLink = page.getByTestId('reset-sidebar-link');
-  }
-
-  async open(): Promise<void> {
-    await this.openButton.click();
   }
 
   async logout(): Promise<void> {
-    await this.open();
+    await this.openButton.click();
     await this.logoutLink.click();
   }
 }
