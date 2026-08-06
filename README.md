@@ -55,9 +55,8 @@ TAGS='@ui and not @slow' npm test   # tag expression, applied at generation time
 `@ui`, `@auth` and `@api` mark the area and sit on the feature. `@smoke` sits on three individual
 scenarios: sign in, complete an order, run the booking lifecycle. A scenario earns `@smoke` if its
 failure would make the rest of the run not worth reading, which is why there are three of them and
-why the list has not grown. There is no `@regression` tag, because a
-tag applied to every feature selects everything and tells you nothing; the regression run is
-`npm test`.
+why the list has not grown. There is no `@regression` tag, because a tag applied to every feature
+selects everything and tells you nothing; the regression run is `npm test`.
 
 ## Layout
 
