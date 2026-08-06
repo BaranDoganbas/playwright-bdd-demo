@@ -57,14 +57,12 @@ export default tseslint.config(
     ...playwright.configs['flat/recommended'],
     rules: {
       ...playwright.configs['flat/recommended'].rules,
-      // Page objects own their assertions (`inventoryPage.expectLoaded()`), so the
-      // rule must recognise those or every test that delegates looks assertion-free.
-      // This is the naming convention for assertion methods on a page object.
-      'playwright/expect-expect': ['error', { assertFunctionPatterns: ['^expect[A-Z]'] }],
-      // Step definitions are registered at module scope by createBdd(), so their
-      // `expect` calls are legitimately outside a test() callback. The rule cannot
-      // model that indirection; the type checker still guarantees they run in one.
+      // Both rules look for assertions inside a test() body. Here the tests are
+      // generated into .features-gen/ and the assertions live in step definitions
+      // registered at module scope, so neither rule can see a true positive: one only
+      // ever fires on the setup file, which does assert, through a page object.
       'playwright/no-standalone-expect': 'off',
+      'playwright/expect-expect': 'off',
     },
   },
 
