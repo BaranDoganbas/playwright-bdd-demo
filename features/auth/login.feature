@@ -3,17 +3,16 @@ Feature: Authentication
   Sign-in behavior for valid, invalid and locked-out users, and what an
   unauthenticated visitor is allowed to reach.
 
-  Background:
-    Given I am on the login page
-
   @smoke
   Scenario: Standard user signs in successfully
+    Given I am on the login page
     When I sign in as "standard_user"
     Then I should see the inventory dashboard
 
   # One shape of failure, several causes. Adding a rejected account is a new row
   # rather than another near-identical scenario.
   Scenario Outline: Sign-in is rejected: <case>
+    Given I am on the login page
     When I sign in as "<user>" with password "<password>"
     Then I should see the login error "<message>"
 
@@ -24,11 +23,11 @@ Feature: Authentication
       | unknown user       | no_such_user    | secret_sauce   | Username and password do not match    |
 
   Scenario Outline: A signed-out visitor cannot reach <page>
-    When I navigate straight to "<page>"
-    Then I should see the login error "You can only access '<page>' when you are logged in."
+    When I request "<page>" without signing in
+    Then I should be told to sign in first
 
     Examples:
       | page                  |
-      | /inventory.html       |
-      | /cart.html            |
-      | /checkout-step-one.html |
+      | the product catalogue |
+      | the cart              |
+      | the checkout form     |

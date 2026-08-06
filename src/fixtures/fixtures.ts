@@ -24,6 +24,8 @@ export type World = {
   lastResponse?: APIResponse;
   /** A catalogue price noted before navigating, to compare against the product page. */
   notedPrice?: number;
+  /** The protected path a signed-out scenario asked for, echoed back in the app's warning. */
+  requestedPath?: string;
 };
 
 type Fixtures = {

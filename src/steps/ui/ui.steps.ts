@@ -13,6 +13,13 @@ import { assertOneOf, fromWorld } from '../../support/preconditions';
 
 const { Given, When, Then } = createBdd(test);
 
+/** Scenarios name pages, not URLs; the mapping to paths belongs here rather than in Gherkin. */
+const PROTECTED_PAGES: Record<string, string> = {
+  'the product catalogue': '/inventory.html',
+  'the cart': '/cart.html',
+  'the checkout form': '/checkout-step-one.html',
+};
+
 // ---------- Authentication ----------
 
 Given('I am on the login page', async ({ loginPage }) => {
@@ -30,8 +37,28 @@ When(
   },
 );
 
-When('I navigate straight to {string}', async ({ loginPage }, path: string) => {
+When('I request {string} without signing in', async ({ loginPage, world }, page: string) => {
+  const path = PROTECTED_PAGES[page];
+  if (!path) {
+    throw new Error(
+      `Unknown page "${page}". Known pages: ${Object.keys(PROTECTED_PAGES).join(', ')}.`,
+    );
+  }
+  world.requestedPath = path;
   await loginPage.goto(path);
+});
+
+// Asserts the path back rather than a generic warning: SauceDemo echoes the page you
+// asked for, and a message naming the wrong page would still be a defect.
+Then('I should be told to sign in first', async ({ loginPage, world }) => {
+  const path = fromWorld(
+    world.requestedPath,
+    'requestedPath',
+    'When I request "..." without signing in',
+  );
+  await expect(loginPage.errorMessage).toContainText(
+    `You can only access '${path}' when you are logged in.`,
+  );
 });
 
 Then('I should see the inventory dashboard', async ({ inventoryPage }) => {
