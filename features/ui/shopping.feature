@@ -1,4 +1,4 @@
-@ui @regression
+@ui
 Feature: Shopping flow
   An authenticated customer can browse, sort, and purchase products.
   These scenarios reuse persisted storage state; login is never repeated here.

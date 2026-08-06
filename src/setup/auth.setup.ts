@@ -16,7 +16,7 @@ setup(
   // Carries every tag the authenticated UI scenarios can be selected by. Without
   // this, `--grep @smoke` would filter out the dependency and leave the ui project
   // with no storage state.
-  { tag: ['@smoke', '@regression', '@ui'] },
+  { tag: ['@smoke', '@ui'] },
   async ({ page }) => {
     const loginPage = new LoginPage(page);
     const inventoryPage = new InventoryPage(page);

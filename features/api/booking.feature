@@ -1,4 +1,4 @@
-@api @regression
+@api
 Feature: Booking API
   CRUD lifecycle of a booking via RESTful Booker, including token-based auth
   and what the API does when the token is missing.

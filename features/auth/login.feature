@@ -1,4 +1,4 @@
-@ui @auth @regression
+@ui @auth
 Feature: Authentication
   Sign-in behavior for valid, invalid and locked-out users, and what an
   unauthenticated visitor is allowed to reach.
