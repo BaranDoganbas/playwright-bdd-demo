@@ -9,6 +9,7 @@ import { env } from './src/config/env';
 const uiSteps = ['src/steps/ui/**/*.ts', 'src/fixtures/fixtures.ts'];
 const apiSteps = ['src/steps/api/**/*.ts', 'src/fixtures/fixtures.ts'];
 const tags = env.run.tags;
+const cucumberReport = 'cucumber-report/index.html';
 
 const browser = {
   chromium: devices['Desktop Chrome'],
@@ -24,7 +25,12 @@ export default defineConfig({
   /** A stray `.only` should fail the CI run rather than silently skip the suite. */
   forbidOnly: env.isCI,
   reporter: [
-    cucumberReporter('html', { outputFile: 'cucumber-report/index.html' }),
+    cucumberReporter('html', { outputFile: cucumberReport }),
+    // The Cucumber HTML reporter has no title option and ships `<title>Cucumber</title>`.
+    [
+      './src/support/report-title.reporter.ts',
+      { file: cucumberReport, title: 'Playwright BDD Demo · Test Report' },
+    ],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list'],
   ],

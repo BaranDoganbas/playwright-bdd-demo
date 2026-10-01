@@ -6,7 +6,7 @@ import { type Page, type Locator } from '@playwright/test';
  *
  * The button ships no `data-test` attribute, so it is addressed by its accessible
  * name. That breaks only if the control stops being a button or stops being
- * labelled, both of which are worth failing on.
+ * labeled, both of which are worth failing on.
  */
 export class AppMenu {
   readonly openButton: Locator;

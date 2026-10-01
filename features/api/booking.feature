@@ -31,11 +31,10 @@ Feature: Booking API
   # The token is the only thing standing between the public internet and someone
   # else's reservation, so its absence is asserted rather than assumed.
   Scenario: A write without a token is refused
-    Given I have an auth token
-    And I create a booking
+    Given a booking exists with a total price of 150
     When I try to update the booking without a token
     Then the request should be refused as forbidden
-    And the booking total price should be 150
+    And the booking total price should still be 150
 
   Scenario: Fetching a booking that does not exist
     When I fetch the booking with id 99999999

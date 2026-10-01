@@ -75,7 +75,7 @@ export class BookerClient {
 
   /**
    * Its own method rather than an optional token argument: with an optional argument an
-   * undefined token would silently turn an authorised test into this one.
+   * undefined token would silently turn an authorized test into this one.
    */
   updateBookingUnauthenticated(id: number, patch: Partial<Booking>): Promise<APIResponse> {
     return this.request.patch(`/booking/${id}`, { data: patch, timeout: env.api.timeout });

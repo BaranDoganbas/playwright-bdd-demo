@@ -3,9 +3,9 @@
 [![E2E Tests](https://github.com/BaranDoganbas/playwright-bdd-demo/actions/workflows/e2e.yml/badge.svg)](https://github.com/BaranDoganbas/playwright-bdd-demo/actions/workflows/e2e.yml)
 
 An end-to-end suite built with [Playwright](https://playwright.dev) and
-[playwright-bdd](https://github.com/vitalets/playwright-bdd). The layout mirrors a suite I maintain
-in production: storage-state auth so sign-in runs once, project separation so the API suite never
-boots a browser, and page objects that stop at readiness.
+[playwright-bdd](https://github.com/vitalets/playwright-bdd). It is a public demo built on the
+patterns I use at work: storage-state auth so sign-in runs once, project separation so the API suite
+never boots a browser, and page objects that stop at readiness.
 
 26 scenarios across a web shop ([SauceDemo](https://www.saucedemo.com)) and a REST API
 ([RESTful Booker](https://restful-booker.herokuapp.com)), run as four Playwright projects.
@@ -13,7 +13,7 @@ boots a browser, and page objects that stop at readiness.
 Both targets are fixtures. They were chosen because they are public and stable, and neither is deep
 enough to be interesting on its own. What the suite does with them is the part worth reading: 11 of
 the 26 scenarios are negative paths, the checkout total is computed from the page rather than
-hardcoded, and the authorisation scenario checks the booking was actually left untouched instead of
+hardcoded, and the authorization scenario checks the booking was actually left untouched instead of
 trusting the 403.
 
 **Live Cucumber report:** https://barandoganbas.github.io/playwright-bdd-demo/
@@ -69,7 +69,7 @@ src/config/    env.ts
 src/data/      test-data builders
 src/fixtures/  page objects and the scenario world, injected into steps
 src/setup/     auth.setup.ts
-src/support/   parseMoney, world preconditions
+src/support/   parseMoney, world preconditions, report title
 ```
 
 `bddgen` turns the feature files into specs, steps get their page objects and the API client from
@@ -79,7 +79,7 @@ ships.
 
 ## Design notes
 
-**Authorisation is checked at the layer that enforces it.** A hidden button proves nothing about
+**Authorization is checked at the layer that enforces it.** A hidden button proves nothing about
 whether the backend refused the write. The API scenario sends an update with no token, asserts the
 403, and then re-reads the booking to confirm the price is unchanged. A status code on its own only
 proves the API said no, not that it meant it.
@@ -106,7 +106,7 @@ keeps sign-in out of the flakiness budget for every other scenario.
 ## Known limitations
 
 RESTful Booker is a shared public sandbox. Other people's bookings are in it, which is why
-[`aBooking()`](src/data/booking.ts) randomises the surname and computes dates relative to today. It
+[`aBooking()`](src/data/booking.ts) randomizes the surname and computes dates relative to today. It
 also cold-starts, which is why the token call is the one retried request. It goes down sometimes, and
 when the API project is red that is worth checking before anything else.
 

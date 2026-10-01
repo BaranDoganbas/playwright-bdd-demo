@@ -1,28 +1,23 @@
 import { expect } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
-import { test } from '../../fixtures/fixtures';
+import { test, type World } from '../../fixtures/fixtures';
 import { aBooking, type Booking } from '../../data/booking';
-import type { CreateBookingResponse } from '../../api/booker.client';
+import type { BookerClient, CreateBookingResponse } from '../../api/booker.client';
 import { fromWorld } from '../../support/preconditions';
 
 const { Given, When, Then } = createBdd(test);
 
 Given('I have an auth token', async ({ booker, world }) => {
-  world.token = await booker.requestToken();
-  expect(world.token, 'auth endpoint should return a token').toBeTruthy();
+  await requestToken(booker, world);
 });
 
 When('I create a booking', async ({ booker, world }) => {
-  const booking = aBooking();
+  await createBooking(booker, world);
+});
 
-  const response = await booker.createBooking(booking);
-  expect(response.status(), await responseDetail(response)).toBe(200);
-
-  const body = (await response.json()) as CreateBookingResponse;
-  expect(body.bookingid, 'response should contain a booking id').toBeTruthy();
-
-  world.booking = booking;
-  world.bookingId = body.bookingid;
+Given('a booking exists with a total price of {int}', async ({ booker, world }, price: number) => {
+  await requestToken(booker, world);
+  await createBooking(booker, world, { totalprice: price });
 });
 
 Then('I can fetch the booking and it matches what I sent', async ({ booker, world }) => {
@@ -47,12 +42,12 @@ When('I update the booking total price to {int}', async ({ booker, world }, pric
 
 Then('the booking total price should be {int}', async ({ booker, world }, price: number) => {
   const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+  await expectTotalPrice(booker, id, price);
+});
 
-  const response = await booker.getBooking(id);
-  expect(response.status()).toBe(200);
-
-  const body = (await response.json()) as Booking;
-  expect(body.totalprice).toBe(price);
+Then('the booking total price should still be {int}', async ({ booker, world }, price: number) => {
+  const id = fromWorld(world.bookingId, 'bookingId', 'Given a booking exists');
+  await expectTotalPrice(booker, id, price);
 });
 
 When('I delete the booking', async ({ booker, world }) => {
@@ -115,7 +110,7 @@ When('I replace the booking with a new payload', async ({ booker, world }) => {
 });
 
 When('I try to update the booking without a token', async ({ booker, world }) => {
-  const id = fromWorld(world.bookingId, 'bookingId', 'When I create a booking');
+  const id = fromWorld(world.bookingId, 'bookingId', 'Given a booking exists');
   world.lastResponse = await booker.updateBookingUnauthenticated(id, { totalprice: 1 });
 });
 
@@ -140,6 +135,36 @@ Then('the booking should not be found', async ({ world }) => {
   );
   expect(response.status(), await responseDetail(response)).toBe(404);
 });
+
+async function requestToken(booker: BookerClient, world: World): Promise<void> {
+  world.token = await booker.requestToken();
+  expect(world.token, 'auth endpoint should return a token').toBeTruthy();
+}
+
+async function createBooking(
+  booker: BookerClient,
+  world: World,
+  overrides: Partial<Booking> = {},
+): Promise<void> {
+  const booking = aBooking(overrides);
+
+  const response = await booker.createBooking(booking);
+  expect(response.status(), await responseDetail(response)).toBe(200);
+
+  const body = (await response.json()) as CreateBookingResponse;
+  expect(body.bookingid, 'response should contain a booking id').toBeTruthy();
+
+  world.booking = booking;
+  world.bookingId = body.bookingid;
+}
+
+async function expectTotalPrice(booker: BookerClient, id: number, price: number): Promise<void> {
+  const response = await booker.getBooking(id);
+  expect(response.status()).toBe(200);
+
+  const body = (await response.json()) as Booking;
+  expect(body.totalprice).toBe(price);
+}
 
 /** Puts the response body in the failure message, so a red run needs no re-run to diagnose. */
 async function responseDetail(response: {
